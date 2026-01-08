@@ -30,16 +30,12 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
     private final AppConfig cfg = AppConfig.getInstance();
     private DesktopPanel desktopPanel;
 
-    // Toolbars
+    // Toolbar
     private JToolBar configToolbar;
-    private JToolBar viewToolbar;
 
     // Config toolbar components
     private JComboBox<String> configComboBox;
     private JComboBox<String> cbDbConnections;
-    private JComboBox<String> cbSources;
-    private JComboBox<String> cbTypes;
-    private JComboBox<String> cbRevisions;
     private JCheckBox chkDump;
     private JCheckBox chkSftpUpload;
     private JCheckBox chkExportProtokoll;
@@ -82,19 +78,12 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
         // Create desktop panel
         desktopPanel = new DesktopPanel();
 
-        // Create toolbars
+        // Create toolbar
         configToolbar = createConfigToolbar();
-        viewToolbar = createViewToolbar();
-
-        // Toolbar panel (stacked vertically)
-        JPanel toolbarPanel = new JPanel();
-        toolbarPanel.setLayout(new BoxLayout(toolbarPanel, BoxLayout.Y_AXIS));
-        toolbarPanel.add(configToolbar);
-        toolbarPanel.add(viewToolbar);
 
         // Build menu bar
         setJMenuBar(createMenuBar());
-        add(toolbarPanel, BorderLayout.NORTH);
+        add(configToolbar, BorderLayout.NORTH);
         add(desktopPanel, BorderLayout.CENTER);
 
         this.addWindowListener(new java.awt.event.WindowAdapter() {
@@ -154,44 +143,6 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
 
         toolbar.addSeparator();
 
-        // === Test Sources ===
-        toolbar.add(new JLabel(" Source: "));
-        cbSources = new JComboBox<>(cfg.getArray("TEST-SOURCES"));
-        cbSources.setSelectedItem(cfg.getProperty("LAST_TEST_SOURCE"));
-        cbSources.setMaximumSize(new Dimension(120, 25));
-        cbSources.addActionListener(e -> {
-            if (isReloading) return;
-            cfg.setProperty("LAST_TEST_SOURCE", (String) cbSources.getSelectedItem());
-            cfg.save();
-        });
-        toolbar.add(cbSources);
-
-        // === Test Types ===
-        toolbar.add(new JLabel(" Type: "));
-        cbTypes = new JComboBox<>(cfg.getArray("TEST-TYPES"));
-        cbTypes.setSelectedItem(cfg.getProperty("LAST_TEST_TYPE"));
-        cbTypes.setMaximumSize(new Dimension(150, 25));
-        cbTypes.addActionListener(e -> {
-            if (isReloading) return;
-            cfg.setProperty("LAST_TEST_TYPE", (String) cbTypes.getSelectedItem());
-            cfg.save();
-        });
-        toolbar.add(cbTypes);
-
-        // === ITSQ Revisions ===
-        toolbar.add(new JLabel(" Rev: "));
-        cbRevisions = new JComboBox<>(cfg.getArray("ITSQ_REVISIONS"));
-        cbRevisions.setSelectedItem(cfg.getProperty("LAST_ITSQ_REVISION"));
-        cbRevisions.setMaximumSize(new Dimension(120, 25));
-        cbRevisions.addActionListener(e -> {
-            if (isReloading) return;
-            cfg.setProperty("LAST_ITSQ_REVISION", (String) cbRevisions.getSelectedItem());
-            cfg.save();
-        });
-        toolbar.add(cbRevisions);
-
-        toolbar.addSeparator();
-
         // === Checkboxes ===
         chkDump = createToolbarCheckBox(toolbar, "Dump", "DUMP_IN_REST_CLIENT");
         chkSftpUpload = createToolbarCheckBox(toolbar, "SFTP", "SFTP_UPLOAD_ACTIVE");
@@ -199,16 +150,9 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
         chkUploadSynthetics = createToolbarCheckBox(toolbar, "Synth", "LAST_UPLOAD_SYNTHETICS");
         chkOnlyTestClz = createToolbarCheckBox(toolbar, "TestClz", "LAST_USE_ONLY_TEST_CLZ");
 
-        return toolbar;
-    }
-
-    /**
-     * Creates the view toolbar for view buttons.
-     */
-    private JToolBar createViewToolbar() {
-        JToolBar toolbar = new JToolBar("Views");
-        toolbar.setFloatable(false);
+        toolbar.addSeparator();
         toolbar.add(new JLabel(" Views: "));
+
         return toolbar;
     }
 
@@ -367,7 +311,7 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
             btn.setToolTipText(reg.tooltip());
         }
         btn.addActionListener(e -> desktopPanel.openView(reg.supplier().get()));
-        viewToolbar.add(btn);
+        configToolbar.add(btn);
     }
 
     private void initWindow() {
@@ -503,17 +447,6 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
             ConnectionManager.setLastConnectionName(dbConnection);
         }
 
-        // Save ComboBox selections
-        if (cbSources.getSelectedItem() != null) {
-            cfg.setProperty("LAST_TEST_SOURCE", (String) cbSources.getSelectedItem());
-        }
-        if (cbTypes.getSelectedItem() != null) {
-            cfg.setProperty("LAST_TEST_TYPE", (String) cbTypes.getSelectedItem());
-        }
-        if (cbRevisions.getSelectedItem() != null) {
-            cfg.setProperty("LAST_ITSQ_REVISION", (String) cbRevisions.getSelectedItem());
-        }
-
         // Save checkbox states
         cfg.setProperty("DUMP_IN_REST_CLIENT", String.valueOf(chkDump.isSelected()));
         cfg.setProperty("SFTP_UPLOAD_ACTIVE", String.valueOf(chkSftpUpload.isSelected()));
@@ -580,25 +513,6 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
                     cbDbConnections.setSelectedItem(lastConn);
                 }
                 TimelineLogger.info(MainFrame.class, "DB connection set to: {}", lastConn);
-            }
-
-            // Reload comboboxes
-            if (cbSources != null) {
-                cbSources.removeAllItems();
-                for (String s : cfg.getArray("TEST-SOURCES")) cbSources.addItem(s);
-                cbSources.setSelectedItem(cfg.getProperty("LAST_TEST_SOURCE"));
-            }
-
-            if (cbTypes != null) {
-                cbTypes.removeAllItems();
-                for (String t : cfg.getArray("TEST-TYPES")) cbTypes.addItem(t);
-                cbTypes.setSelectedItem(cfg.getProperty("LAST_TEST_TYPE"));
-            }
-
-            if (cbRevisions != null) {
-                cbRevisions.removeAllItems();
-                for (String r : cfg.getArray("ITSQ_REVISIONS")) cbRevisions.addItem(r);
-                cbRevisions.setSelectedItem(cfg.getProperty("LAST_ITSQ_REVISION"));
             }
 
             // Reload checkboxes
