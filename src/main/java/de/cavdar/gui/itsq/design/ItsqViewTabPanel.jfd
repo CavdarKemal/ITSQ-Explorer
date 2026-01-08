@@ -1,0 +1,78 @@
+JFDML JFormDesigner: "8.3" encoding: "UTF-8"
+
+new FormModel {
+	"i18n.autoExternalize": true
+	"i18n.bundlePackage": "de.cavdar.gui.design"
+	"i18n.bundleName": "form"
+	"i18n.keyPrefix": "ITSQViewPanel"
+	contentType: "form/swing"
+	root: new FormRoot {
+		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class java.awt.CardLayout ) ) {
+			name: "this"
+			"border": new javax.swing.border.EtchedBorder( 1, null, null )
+			auxiliary() {
+				"JavaCodeGenerator.variableGetter": true
+			}
+			add( new FormComponent( "de.cavdar.gui.itsq.view.ItsqRootView" ) {
+				name: "panelRoot"
+				"border": new javax.swing.border.EtchedBorder( 1, null, null )
+			}, new FormLayoutConstraints( class java.lang.String ) {
+				"value": "cardItsqRoot"
+			} )
+			add( new FormComponent( "de.cavdar.gui.itsq.view.ItsqArchivBestandView" ) {
+				name: "panelArchivBestand"
+			}, new FormLayoutConstraints( class java.lang.String ) {
+				"value": "cardArchivBestand"
+			} )
+			add( new FormComponent( "de.cavdar.gui.itsq.view.ItsqArchibBestandPhaseView" ) {
+				name: "panelArchivBestandPhase"
+			}, new FormLayoutConstraints( class java.lang.String ) {
+				"value": "cardArchivBestandPhase"
+			} )
+			add( new FormComponent( "de.cavdar.gui.itsq.view.ItsqRefExportsView" ) {
+				name: "panelRefExports"
+			}, new FormLayoutConstraints( class java.lang.String ) {
+				"value": "cardRefExports"
+			} )
+			add( new FormComponent( "de.cavdar.gui.itsq.view.ItsqRefExportsPhaseView" ) {
+				name: "panelRefExportsPhase"
+			}, new FormLayoutConstraints( class java.lang.String ) {
+				"value": "cardRefExportsPhase"
+			} )
+			add( new FormComponent( "de.cavdar.gui.itsq.view.ItsqCustomerView" ) {
+				name: "panelCustomer"
+			}, new FormLayoutConstraints( class java.lang.String ) {
+				"value": "cardCustomer"
+			} )
+			add( new FormComponent( "de.cavdar.gui.itsq.view.ItsqScenarioView" ) {
+				name: "panelScenario"
+			}, new FormLayoutConstraints( class java.lang.String ) {
+				"value": "cardScenario"
+			} )
+			add( new FormComponent( "de.cavdar.gui.itsq.view.ItsqEditorView" ) {
+				name: "panelXml"
+				auxiliary() {
+					"JavaCodeGenerator.variableName": "panelEditor"
+				}
+			}, new FormLayoutConstraints( class java.lang.String ) {
+				"value": "cardXml"
+			} )
+			add( new FormComponent( "de.cavdar.gui.itsq.view.ItsqEditorView" ) {
+				name: "panelOptions"
+				auxiliary() {
+					"JavaCodeGenerator.variableGetter": true
+				}
+			}, new FormLayoutConstraints( class java.lang.String ) {
+				"value": "cardOptions"
+			} )
+			add( new FormComponent( "de.cavdar.gui.itsq.view.ItsqEditorView" ) {
+				name: "panelScenarioProperties"
+			}, new FormLayoutConstraints( class java.lang.String ) {
+				"value": "cardScenarioProperties"
+			} )
+		}, new FormLayoutConstraints( null ) {
+			"location": new java.awt.Point( 0, 0 )
+			"size": new java.awt.Dimension( 505, 300 )
+		} )
+	}
+}

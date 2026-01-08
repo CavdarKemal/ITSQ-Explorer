@@ -20,4 +20,4 @@ release.properties
 Thumbs.db
 /LOCAL/*
 TEST-ENVS/
-ITSQ/
+/ITSQ/
