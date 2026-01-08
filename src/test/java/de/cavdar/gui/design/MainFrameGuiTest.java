@@ -3,8 +3,6 @@ package de.cavdar.gui.design;
 import de.cavdar.gui.view.itsq.ItsqExplorerView;
 import de.cavdar.gui.design.base.MainFrame;
 import de.cavdar.gui.util.TestEnvironmentManager;
-import de.cavdar.gui.view.json.ItsqTreeView;
-import de.cavdar.gui.view.prozess.ProzessView;
 import org.assertj.swing.core.BasicRobot;
 import org.assertj.swing.core.GenericTypeMatcher;
 import org.assertj.swing.core.Robot;
@@ -44,8 +42,6 @@ class MainFrameGuiTest {
         // Create MainFrame on EDT and register views
         MainFrame frame = GuiActionRunner.execute(() -> {
             MainFrame f = new MainFrame();
-            f.registerView(ProzessView::new);
-            f.registerView(ItsqTreeView::new);
             f.registerView(ItsqExplorerView::new);
             return f;
         });
@@ -103,23 +99,9 @@ class MainFrameGuiTest {
     }
 
     @Test
-    @DisplayName("View toolbar should have all view buttons")
+    @DisplayName("View toolbar should have ITSQ-Test-Set button")
     void shouldHaveViewToolbar() {
-        // Find buttons by text matcher
-        window.button(new GenericTypeMatcher<JButton>(JButton.class) {
-            @Override
-            protected boolean isMatching(JButton button) {
-                return "Prozess".equals(button.getText());
-            }
-        }).requireVisible();
-
-        window.button(new GenericTypeMatcher<JButton>(JButton.class) {
-            @Override
-            protected boolean isMatching(JButton button) {
-                return "JSON-Explorer".equals(button.getText());
-            }
-        }).requireVisible();
-
+        // Find ITSQ-Test-Set button
         window.button(new GenericTypeMatcher<JButton>(JButton.class) {
             @Override
             protected boolean isMatching(JButton button) {
