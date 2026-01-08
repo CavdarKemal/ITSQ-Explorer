@@ -1,0 +1,55 @@
+Im package de.cavdar.gui.itsq.design habe ich die GUI-Klassen, die ich mit JFormDesigner erstellt habe
+Im package de.cavdar.gui.itsq.view habe ich die View-Klassen, die jeweils Klassen aus dem design-Package erben
+
+Im Projekt-Ordner ist ein Bild aus dem JFormDesigner für das Panel ItsqMainPanel.jfd
+
+Erledigt:
+ITSQ-Explorer soll die GUI unter jfd-Package benutzen. Dabei soll der Tree aus dem ITSQ-Verzeichnis initialisert werden (wie bisher)
+Zusatz: Je nach selektiertem Tree-Item soll in der rechten View (Card-Layout) die passend View dargestellt werden:
+  z.B: ITSQ -> ItsqRootView
+        ARCHIV-BESTAND -> ItsqArchivBestandView
+        ARCHIV-BESTAND/PHASE-1 -> ItsqArchibBestandPhaseView
+        ARCHIV-BESTAND/PHASE-2 -> ItsqArchibBestandPhaseView
+        REF-EXPORTS -> ItsqRefExportsView
+        REF-EXPORTS/PHASE-1 -> ItsqRefExportsPhaseView
+        REF-EXPORTS/PHASE-2 -> ItsqRefExportsPhaseView
+        REF-EXPORTS/PHASE-x/Relevanx-xyz -> ItsqScenarioView
+        REF-EXPORTS/PHASE-x/Relevanx-xyz/c0x -> ItsqCustomerView
+
+Erledigt:
+Zusatz: die Zuordnung war teilweise falsch, hier die korrigierte/erweiterte Zuordnung von TreeItem zu Vixs.
+        Bitte das selektierte Tree-Item den Views als Parameter übergeben.
+        Die Zuourdnung TreeItem -> View:
+        ITSQ                                                -> ItsqRootView
+        ARCHIV-BESTAND                                      -> ItsqArchivBestandView
+        ARCHIV-BESTAND/PHASE-1                              -> ItsqArchibBestandPhaseView
+        ARCHIV-BESTAND/PHASE-2                              -> ItsqArchibBestandPhaseView
+        REF-EXPORTS                                         -> ItsqRefExportsView
+        REF-EXPORTS/PHASE-1                                 -> ItsqRefExportsPhaseView
+        REF-EXPORTS/PHASE-2                                 -> ItsqRefExportsPhaseView
+        ARCHIV-BESTAND/PHASE-1/xyz.xml                      -> ItsqXmlView
+        REF-EXPORTS/PHASE-x/c0x                             -> ItsqCustomerView
+        REF-EXPORTS/PHASE-x/c0x/Options.cfg                 -> ItsqOptionsView
+        REF-EXPORTS/PHASE-x/c0x/Relevanx-xyz                -> ItsqScenarioView
+        REF-EXPORTS/PHASE-x/c0x/Relevanx-xyz/*.properties   -> ItsqScenarioPropertiesView
+        REF-EXPORTS/PHASE-x/c0x/Relevanx-xyz/*.xml          -> ItsqXmlView
+
+Erledigt:
+Ich hätte gerne ein spezielles Tree-Model "ItsQTreeModel". Je nach Tree-Item-Typ, sollen
+  entsprechende Nodes wie z.B. "ItsqArchivBestandTreeNode", "ItsqRefExportsTreeNode".
+  "ItsqCustomerTreeNode", ... erstellt werden. Dabei soll als UserObject jeweils Objekte wie
+  "ItsqArchivBestand", "ItsqRefExports", "ItsqCustomer", ... benutzt werden
+
+Erledigt:
+    Neue Zuordnung:
+        ARCHIV-BESTAND/PHASE-1/xyz.xml                      -> ItsqXmlView
+        REF-EXPORTS/PHASE-x/c0x/Options.cfg                 -> ItsqXmlView
+        REF-EXPORTS/PHASE-x/c0x/Relevanx-xyz/*.properties   -> ItsqXmlView
+    alle unnötigen *Panel, *.jfd und *View Dateien entfernen.
+
+Erledigt:
+    ITSQ-Explorer (ItsqExplorerView): nach dem Laden der ITSQ-Infos sollte die selektierte Quelle in die comboBoxTestSet hinzugefügt werden
+                                      die ComboBox sollte eine History besitzen. Be wechsel des CB-Items soll das TreeModel aktualisert werden.
+
+Neue Wünsche:
+    Ich habe im Verzeichnis "delivery" ein Test-Set kopiert (LOCAL). Bitte dieses Verzeichnis in den Assembly-Decriptor aufnehmen, so dass das Verzeichnis ins Root-Verzeichnis der Distibution kopiert wird.

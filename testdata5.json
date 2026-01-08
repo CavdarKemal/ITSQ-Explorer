@@ -1,0 +1,66 @@
+[ {
+  "customerKey" : "CUST01",
+  "jvmName" : "JVM_ENE_01",
+  "customerName" : "Mustermann GmbH",
+  "testPhase" : "PHASE1",
+  "activated" : true,
+  "testScenariosMap" : {
+    "Buchung_Standard" : {
+      "activated" : true,
+      "scenarioName" : "Buchung_Standard",
+      "testFallNameToTestCrefoMap" : {
+        "BU_001" : {
+          "testFallName" : "BU_001",
+          "testFallInfo" : "Standard Buchung",
+          "itsqTestCrefoNr" : 1001,
+          "pseudoCrefoNr" : null,
+          "shouldBeExported" : false,
+          "activated" : true,
+          "exported" : false
+        },
+        "BU_002" : {
+          "testFallName" : "BU_002",
+          "testFallInfo" : "Buchung mit Rabatt",
+          "itsqTestCrefoNr" : 1002,
+          "pseudoCrefoNr" : null,
+          "shouldBeExported" : false,
+          "activated" : true,
+          "exported" : false
+        },
+        "BU_003" : {
+          "testFallName" : "BU_003",
+          "testFallInfo" : "Storno Buchung",
+          "itsqTestCrefoNr" : 1003,
+          "pseudoCrefoNr" : null,
+          "shouldBeExported" : false,
+          "activated" : false,
+          "exported" : false
+        }
+      }
+    },
+    "Zahlung_Eingang" : {
+      "activated" : true,
+      "scenarioName" : "Zahlung_Eingang",
+      "testFallNameToTestCrefoMap" : {
+        "ZE_001" : {
+          "testFallName" : "ZE_001",
+          "testFallInfo" : "Zahlung Lastschrift",
+          "itsqTestCrefoNr" : 2001,
+          "pseudoCrefoNr" : null,
+          "shouldBeExported" : false,
+          "activated" : true,
+          "exported" : false
+        },
+        "ZE_002" : {
+          "testFallName" : "ZE_002",
+          "testFallInfo" : "Zahlung Überweisung",
+          "itsqTestCrefoNr" : 2002,
+          "pseudoCrefoNr" : null,
+          "shouldBeExported" : false,
+          "activated" : true,
+          "exported" : false
+        }
+      }
+    }
+  }
+} ]

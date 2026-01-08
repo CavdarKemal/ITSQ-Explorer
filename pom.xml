@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>de.itsqexplorer</groupId>
+    <artifactId>ITSQ-Explorer</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <name>ITSQ-Explorer</name>
+    <description>ITSQ Test-Set Explorer - basierend auf TemplateGUI</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+
+        <!-- Testfaelle Artefakt Koordinaten -->
+        <testfaelle.groupId>testfaelle</testfaelle.groupId>
+        <testfaelle.artifactId>itsq</testfaelle.artifactId>
+        <testfaelle.classifier>distribution-${testfaelle.branch}</testfaelle.classifier>
+        <testfaelle.type>zip</testfaelle.type>
+
+        <!-- Plugin Versionen -->
+        <maven-dependency-plugin.version>3.6.1</maven-dependency-plugin.version>
+        <maven-assembly-plugin.version>3.6.0</maven-assembly-plugin.version>
+        <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
+
+        <!-- Dependency Versionen -->
+        <log4j.version>1.2.12</log4j.version>
+        <slf4j-api.version>2.0.9</slf4j-api.version>
+        <slf4j-reload4j.version>2.0.6</slf4j-reload4j.version>
+        <postgresql.version>42.7.4</postgresql.version>
+        <jackson.version>2.17.0</jackson.version>
+        <rsyntaxtextarea.version>3.5.2</rsyntaxtextarea.version>
+        <junit.version>5.10.2</junit.version>
+        <assertj-swing.version>3.17.1</assertj-swing.version>
+    </properties>
+
+    <build>
+        <plugins>
+            <!-- JAR mit Main-Class Manifest -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven-jar-plugin.version}</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>de.cavdar.gui.Main</mainClass>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>./</classpathPrefix>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <!-- Download und Entpacken des Testfaelle-Artefakts aus dem Repository -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>${maven-dependency-plugin.version}</version>
+                <executions>
+                    <!-- Option 1: Nur herunterladen (ZIP bleibt gepackt) -->
+                    <execution>
+                        <id>download-testfaelle</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>${testfaelle.groupId}</groupId>
+                                    <artifactId>${testfaelle.artifactId}</artifactId>
+                                    <version>${testfaelle.version}</version>
+                                    <classifier>${testfaelle.classifier}</classifier>
+                                    <type>${testfaelle.type}</type>
+                                    <outputDirectory>${project.build.directory}/testfaelle-zip</outputDirectory>
+                                    <destFileName>testfaelle-${testfaelle.version}.zip</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <!-- Option 2: Herunterladen und Entpacken ins Projektverzeichnis -->
+                    <execution>
+                        <id>unpack-testfaelle</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>${testfaelle.groupId}</groupId>
+                                    <artifactId>${testfaelle.artifactId}</artifactId>
+                                    <version>${testfaelle.version}</version>
+                                    <classifier>${testfaelle.classifier}</classifier>
+                                    <type>${testfaelle.type}</type>
+                                    <outputDirectory>${project.basedir}/ITSQ</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <!-- Dependencies in lib-Verzeichnis kopieren -->
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                            <includeScope>runtime</includeScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Auslieferbares Artefakt erstellen -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>${maven-assembly-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>create-distribution</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <descriptors>
+                        <descriptor>src/assembly/distribution.xml</descriptor>
+                    </descriptors>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- SNAPSHOT-Version vom TEST-01 Branch (Standard) -->
+        <profile>
+            <id>snapshot</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <testfaelle.version>1.1.0-SNAPSHOT</testfaelle.version>
+                <testfaelle.branch>TEST-01</testfaelle.branch>
+            </properties>
+        </profile>
+        <!-- Release-Version vom TEST-01 Branch -->
+        <profile>
+            <id>release</id>
+            <properties>
+                <testfaelle.version>1.1.0</testfaelle.version>
+                <testfaelle.branch>TEST-01</testfaelle.branch>
+            </properties>
+        </profile>
+    </profiles>
+
+    <dependencies>
+        <!-- Logging -->
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j-api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-reload4j</artifactId>
+            <version>${slf4j-reload4j.version}</version>
+        </dependency>
+
+        <!-- Database: PostgreSQL JDBC Driver -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+        </dependency>
+
+        <!-- JSON: Jackson for JSON parsing -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
+        <!-- RSyntaxTextArea for syntax highlighting -->
+        <dependency>
+            <groupId>com.fifesoft</groupId>
+            <artifactId>rsyntaxtextarea</artifactId>
+            <version>${rsyntaxtextarea.version}</version>
+        </dependency>
+
+        <!-- Testing: JUnit 5 -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testing: AssertJ Swing for GUI tests -->
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-swing-junit</artifactId>
+            <version>${assertj-swing.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>
