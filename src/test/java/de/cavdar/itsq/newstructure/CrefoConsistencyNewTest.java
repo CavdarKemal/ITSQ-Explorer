@@ -1,5 +1,6 @@
 package de.cavdar.itsq.newstructure;
 
+import de.cavdar.itsq.AB30XMLProperties;
 import de.cavdar.itsq.CrefoConsistencyTestBase;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -9,7 +10,6 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.file.*;
 import java.util.*;
-import java.util.regex.*;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -218,14 +218,18 @@ class CrefoConsistencyNewTest extends CrefoConsistencyTestBase {
     class ParsingTests {
 
         @Test
-        @DisplayName("TestCrefos Pattern sollte korrekt matchen")
-        void testCrefosPatternShouldMatch() {
-            String line = "1234567891::[c02;c03;c05],[412],[1234567895],[BILANZ],[FIRMA_FIRMA],[CTA_STATISTIK],[DSGVO_SPERRE]";
-            Matcher matcher = CREFO_PATTERN.matcher(line);
+        @DisplayName("AB30XMLProperties sollte TestCrefos-Zeile korrekt parsen")
+        void ab30XmlPropertiesShouldParseCorrectly() {
+            String line = "1234567891::[c02;c03;c05],[412],[1234567895],[BILANZ],[KEINE],[CTA_STATISTIK],[DSGVO_SPERRE]";
+            AB30XMLProperties props = new AB30XMLProperties(line, 2);
 
-            assertTrue(matcher.matches(), "Pattern sollte matchen");
-            assertEquals("1234567891", matcher.group(1), "Crefo sollte extrahiert werden");
-            assertEquals("c02;c03;c05", matcher.group(2), "Kunden sollten extrahiert werden");
+            assertEquals(1234567891L, props.getCrefoNr(), "Crefo sollte extrahiert werden");
+            assertEquals(List.of("c02", "c03", "c05"), props.getUsedByCustomersList(), "Kunden sollten extrahiert werden");
+            assertEquals(412L, props.getAuftragClz(), "CLZ sollte extrahiert werden");
+            assertTrue(props.getBtlgCrefosList().contains(1234567895L), "Beteiligter sollte extrahiert werden");
+            assertEquals(AB30XMLProperties.BILANZEN_TYPE.BILANZ, props.getBilanzType(), "BilanzType sollte extrahiert werden");
+            assertTrue(props.isMitCtaStatistik(), "CTA_STATISTIK sollte true sein");
+            assertTrue(props.isMitDsgVoSperre(), "DSGVO_SPERRE sollte true sein");
         }
 
         @Test

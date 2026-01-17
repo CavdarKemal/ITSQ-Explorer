@@ -6,19 +6,20 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.*;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.*;
 import java.util.*;
-import java.util.regex.*;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Konsistenztest fuer die Zuordnung von Crefo-Nummern zu Kunden.
+ * Konsistenztest fuer die Zuordnung von Crefo-Nummern zu Kunden (OLD Struktur).
  *
  * Prueft, ob die Crefos in den Relevanz_Positiv/Relevanz.properties Dateien
  * mit den Definitionen in TestCrefos.properties uebereinstimmen.
+ *
+ * Verwendet die Model-Klassen TestCustomer, TestScenario und TestCrefo
+ * sowie AB30XMLProperties fuer das Parsing.
  *
  * WICHTIG:
  * - PHASE-1: Zuordnungen sind eine UNTERMENGE von PHASE-2
@@ -31,23 +32,14 @@ import static org.junit.jupiter.api.Assertions.*;
  * Testdaten liegen unter: src/test/resources/ITSQ/OLD/
  */
 @DisplayName("Crefo Konsistenz Tests (OLD)")
-class CrefoConsistencyTest {
+class CrefoConsistencyTest extends CrefoConsistencyTestBase {
 
     private static final String BASE_PATH = "/ITSQ/OLD";
     private static final String ARCHIV_BESTAND_PH1 = BASE_PATH + "/ARCHIV-BESTAND-PH1";
     private static final String ARCHIV_BESTAND_PH2 = BASE_PATH + "/ARCHIV-BESTAND-PH2";
     private static final String REF_EXPORTS = BASE_PATH + "/REF-EXPORTS";
-    private static final String TEST_CREFOS_FILE = "TestCrefos.properties";
-    private static final String RELEVANZ_POSITIV = "Relevanz_Positiv";
-    private static final String RELEVANZ_FILE = "Relevanz.properties";
 
     private static final List<String> CUSTOMERS = List.of("c01", "c02", "c03", "c04", "c05");
-
-    // Pattern fuer TestCrefos.properties: CREFO::[kunden],[clz],[btlg],[bilanz],[transfer],[statistik],[dsgvo]
-    private static final Pattern CREFO_PATTERN = Pattern.compile("^(\\d+)::\\[([^\\]]*)\\].*");
-
-    // Pattern fuer Relevanz.properties: pXX=CREFO oder xXX=CREFO (nicht nXX)
-    private static final Pattern RELEVANZ_PATTERN = Pattern.compile("^[px]\\d+=\\s*(\\d+).*");
 
     private Map<String, Set<String>> phase1CrefoToCustomers;
     private Map<String, Set<String>> phase2CrefoToCustomers;
@@ -57,85 +49,7 @@ class CrefoConsistencyTest {
     void setUp() throws IOException, URISyntaxException {
         phase1CrefoToCustomers = loadMappingsFromResource(ARCHIV_BESTAND_PH1 + "/" + TEST_CREFOS_FILE);
         phase2CrefoToCustomers = loadMappingsFromResource(ARCHIV_BESTAND_PH2 + "/" + TEST_CREFOS_FILE);
-        actualCrefoToCustomers = loadActualMappings();
-    }
-
-    /**
-     * Laedt eine Ressource als Path vom Classpath.
-     */
-    private Path getResourcePath(String resourcePath) throws URISyntaxException {
-        URL url = getClass().getResource(resourcePath);
-        if (url == null) {
-            return null;
-        }
-        return Paths.get(url.toURI());
-    }
-
-    /**
-     * Laedt die Zuordnungen aus einer TestCrefos.properties Datei vom Classpath.
-     */
-    private Map<String, Set<String>> loadMappingsFromResource(String resourcePath) throws IOException, URISyntaxException {
-        Map<String, Set<String>> mappings = new HashMap<>();
-
-        Path path = getResourcePath(resourcePath);
-        if (path == null || !Files.exists(path)) {
-            return mappings; // Leere Map wenn Datei nicht existiert
-        }
-
-        List<String> lines = Files.readAllLines(path);
-        for (String line : lines) {
-            if (line.startsWith("#") || line.isBlank()) {
-                continue;
-            }
-
-            Matcher matcher = CREFO_PATTERN.matcher(line.trim());
-            if (matcher.matches()) {
-                String crefo = matcher.group(1);
-                String customersStr = matcher.group(2);
-
-                Set<String> customers = new HashSet<>();
-                if (!customersStr.isBlank()) {
-                    for (String customer : customersStr.split(";")) {
-                        String trimmed = customer.trim();
-                        if (!trimmed.isEmpty()) {
-                            customers.add(trimmed);
-                        }
-                    }
-                }
-                mappings.put(crefo, customers);
-            }
-        }
-        return mappings;
-    }
-
-    /**
-     * Laedt die tatsaechlichen Zuordnungen aus den Relevanz_Positiv/Relevanz.properties Dateien.
-     */
-    private Map<String, Set<String>> loadActualMappings() throws IOException, URISyntaxException {
-        Map<String, Set<String>> mappings = new HashMap<>();
-
-        for (String customer : CUSTOMERS) {
-            String resourcePath = REF_EXPORTS + "/" + customer + "/" + RELEVANZ_POSITIV + "/" + RELEVANZ_FILE;
-            Path path = getResourcePath(resourcePath);
-
-            if (path == null || !Files.exists(path)) {
-                continue;
-            }
-
-            List<String> lines = Files.readAllLines(path);
-            for (String line : lines) {
-                if (line.startsWith("#") || line.isBlank()) {
-                    continue;
-                }
-
-                Matcher matcher = RELEVANZ_PATTERN.matcher(line.trim());
-                if (matcher.matches()) {
-                    String crefo = matcher.group(1);
-                    mappings.computeIfAbsent(crefo, k -> new HashSet<>()).add(customer);
-                }
-            }
-        }
-        return mappings;
+        actualCrefoToCustomers = loadActualMappings(REF_EXPORTS, CUSTOMERS);
     }
 
     // ===== Basis-Tests =====
@@ -179,22 +93,7 @@ class CrefoConsistencyTest {
         @Test
         @DisplayName("PHASE-1: Crefos muessen bei MINDESTENS den definierten Kunden vorkommen")
         void phase1CrefosShouldAppearAtLeastAtDefinedCustomers() {
-            List<String> errors = new ArrayList<>();
-
-            for (Map.Entry<String, Set<String>> entry : phase1CrefoToCustomers.entrySet()) {
-                String crefo = entry.getKey();
-                Set<String> expectedMinCustomers = entry.getValue();
-                Set<String> actualCustomers = actualCrefoToCustomers.getOrDefault(crefo, Collections.emptySet());
-
-                // Pruefe ob ALLE erwarteten Kunden enthalten sind (mehr ist erlaubt!)
-                Set<String> missingCustomers = new HashSet<>(expectedMinCustomers);
-                missingCustomers.removeAll(actualCustomers);
-
-                if (!missingCustomers.isEmpty()) {
-                    errors.add(String.format("Crefo %s: Fehlt bei %s (muss mindestens bei %s vorkommen, ist bei %s)",
-                            crefo, missingCustomers, expectedMinCustomers, actualCustomers));
-                }
-            }
+            List<String> errors = checkSubsetConsistency(phase1CrefoToCustomers, actualCrefoToCustomers, "PHASE-1");
 
             if (!errors.isEmpty()) {
                 fail("PHASE-1 Konsistenzfehler gefunden:\n" + String.join("\n", errors));
@@ -230,31 +129,7 @@ class CrefoConsistencyTest {
         @Test
         @DisplayName("PHASE-2: Crefos muessen EXAKT bei den definierten Kunden vorkommen")
         void phase2CrefosShouldMatchExactly() {
-            List<String> errors = new ArrayList<>();
-
-            for (Map.Entry<String, Set<String>> entry : phase2CrefoToCustomers.entrySet()) {
-                String crefo = entry.getKey();
-                Set<String> expectedCustomers = entry.getValue();
-                Set<String> actualCustomers = actualCrefoToCustomers.getOrDefault(crefo, Collections.emptySet());
-
-                // Pruefe auf unerwartete Kunden
-                Set<String> unexpectedCustomers = new HashSet<>(actualCustomers);
-                unexpectedCustomers.removeAll(expectedCustomers);
-
-                if (!unexpectedCustomers.isEmpty()) {
-                    errors.add(String.format("Crefo %s: Unerwartet bei %s (erwartet nur bei %s)",
-                            crefo, unexpectedCustomers, expectedCustomers));
-                }
-
-                // Pruefe auf fehlende Kunden
-                Set<String> missingCustomers = new HashSet<>(expectedCustomers);
-                missingCustomers.removeAll(actualCustomers);
-
-                if (!missingCustomers.isEmpty()) {
-                    errors.add(String.format("Crefo %s: Fehlt bei %s (erwartet bei %s)",
-                            crefo, missingCustomers, expectedCustomers));
-                }
-            }
+            List<String> errors = checkExactConsistency(phase2CrefoToCustomers, actualCrefoToCustomers, "PHASE-2");
 
             if (!errors.isEmpty()) {
                 fail("PHASE-2 Konsistenzfehler gefunden:\n" + String.join("\n", errors));
@@ -295,20 +170,7 @@ class CrefoConsistencyTest {
         @Test
         @DisplayName("PHASE-1 Zuordnungen muessen Untermenge von PHASE-2 sein")
         void phase1ShouldBeSubsetOfPhase2() {
-            List<String> errors = new ArrayList<>();
-
-            for (Map.Entry<String, Set<String>> entry : phase1CrefoToCustomers.entrySet()) {
-                String crefo = entry.getKey();
-                Set<String> phase1Customers = entry.getValue();
-                Set<String> phase2Customers = phase2CrefoToCustomers.getOrDefault(crefo, Collections.emptySet());
-
-                if (!phase2Customers.containsAll(phase1Customers)) {
-                    Set<String> notInPhase2 = new HashSet<>(phase1Customers);
-                    notInPhase2.removeAll(phase2Customers);
-                    errors.add(String.format("Crefo %s: PHASE-1 hat %s, aber PHASE-2 hat nur %s (fehlt: %s)",
-                            crefo, phase1Customers, phase2Customers, notInPhase2));
-                }
-            }
+            List<String> errors = checkPhase1SubsetOfPhase2(phase1CrefoToCustomers, phase2CrefoToCustomers);
 
             if (!errors.isEmpty()) {
                 fail("PHASE-1 ist keine Untermenge von PHASE-2:\n" + String.join("\n", errors));
@@ -341,23 +203,41 @@ class CrefoConsistencyTest {
     class ParsingTests {
 
         @Test
-        @DisplayName("TestCrefos Pattern sollte korrekt matchen")
-        void testCrefosPatternShouldMatch() {
-            String line = "1234567891::[c02;c03;c05],[412],[1234567895],[BILANZ],[FIRMA_FIRMA],[CTA_STATISTIK],[DSGVO_SPERRE]";
-            Matcher matcher = CREFO_PATTERN.matcher(line);
+        @DisplayName("AB30XMLProperties sollte TestCrefos-Zeile korrekt parsen")
+        void ab30XmlPropertiesShouldParseCorrectly() {
+            String line = "1234567891::[c02;c03;c05],[412],[1234567895],[BILANZ],[KEINE],[CTA_STATISTIK],[DSGVO_SPERRE]";
+            AB30XMLProperties props = new AB30XMLProperties(line, 2);
 
-            assertTrue(matcher.matches(), "Pattern sollte matchen");
-            assertEquals("1234567891", matcher.group(1), "Crefo sollte extrahiert werden");
-            assertEquals("c02;c03;c05", matcher.group(2), "Kunden sollten extrahiert werden");
+            assertEquals(1234567891L, props.getCrefoNr(), "Crefo sollte extrahiert werden");
+            assertEquals(List.of("c02", "c03", "c05"), props.getUsedByCustomersList(), "Kunden sollten extrahiert werden");
+            assertEquals(412L, props.getAuftragClz(), "CLZ sollte extrahiert werden");
+            assertTrue(props.getBtlgCrefosList().contains(1234567895L), "Beteiligter sollte extrahiert werden");
+            assertEquals(AB30XMLProperties.BILANZEN_TYPE.BILANZ, props.getBilanzType(), "BilanzType sollte extrahiert werden");
+            assertTrue(props.isMitCtaStatistik(), "CTA_STATISTIK sollte true sein");
+            assertTrue(props.isMitDsgVoSperre(), "DSGVO_SPERRE sollte true sein");
         }
 
         @Test
-        @DisplayName("Relevanz Pattern sollte pXX und xXX matchen")
-        void relevanzPatternShouldMatchPAndX() {
-            assertTrue(RELEVANZ_PATTERN.matcher("p01=1234567891 # kommentar").matches());
-            assertTrue(RELEVANZ_PATTERN.matcher("x01=1234567892").matches());
-            assertFalse(RELEVANZ_PATTERN.matcher("n01=1234567893").matches(), "nXX sollte nicht matchen");
-            assertFalse(RELEVANZ_PATTERN.matcher("# kommentar").matches());
+        @DisplayName("TestScenario sollte Relevanz.properties korrekt laden")
+        void testScenarioShouldLoadRelevanzCorrectly() throws URISyntaxException {
+            // Lade TestCustomer fuer c01
+            Map<String, TestCustomer> customers = loadTestCustomers(REF_EXPORTS, List.of("c01"));
+            assertFalse(customers.isEmpty(), "Customer c01 sollte geladen werden");
+
+            TestCustomer c01 = customers.get("c01");
+            assertNotNull(c01, "TestCustomer c01 sollte existieren");
+
+            // Pruefe ob Relevanz_Positiv Szenario geladen wurde
+            Map<String, TestScenario> scenarios = c01.getTestScenariosMap();
+            assertTrue(scenarios.containsKey(RELEVANZ_POSITIV), "Relevanz_Positiv Szenario sollte existieren");
+
+            TestScenario relevanzPositiv = scenarios.get(RELEVANZ_POSITIV);
+            assertFalse(relevanzPositiv.getTestCrefosAsList().isEmpty(), "TestCrefos sollten geladen sein");
+
+            // Pruefe einzelne TestCrefo
+            List<TestCrefo> testCrefos = relevanzPositiv.getTestCrefosAsList();
+            boolean foundPositive = testCrefos.stream().anyMatch(tc -> tc.isShouldBeExported());
+            assertTrue(foundPositive, "Es sollte mindestens eine positive TestCrefo geben");
         }
     }
 

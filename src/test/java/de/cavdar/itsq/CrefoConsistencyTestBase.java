@@ -5,24 +5,18 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.*;
 import java.util.*;
-import java.util.regex.*;
 
 /**
  * Basisklasse fuer Crefo-Konsistenztests.
  *
  * Stellt gemeinsame Funktionalitaet fuer OLD und NEW Strukturen bereit.
+ * Verwendet die Model-Klassen TestCustomer, TestScenario und TestCrefo.
  */
 public abstract class CrefoConsistencyTestBase {
 
     protected static final String TEST_CREFOS_FILE = "TestCrefos.properties";
     protected static final String RELEVANZ_POSITIV = "Relevanz_Positiv";
     protected static final String RELEVANZ_FILE = "Relevanz.properties";
-
-    // Pattern fuer TestCrefos.properties: CREFO::[kunden],[clz],[btlg],[bilanz],[transfer],[statistik],[dsgvo]
-    protected static final Pattern CREFO_PATTERN = Pattern.compile("^(\\d+)::\\[([^\\]]*)\\].*");
-
-    // Pattern fuer Relevanz.properties: pXX=CREFO oder xXX=CREFO (nicht nXX)
-    protected static final Pattern RELEVANZ_PATTERN = Pattern.compile("^[px]\\d+=\\s*(\\d+).*");
 
     /**
      * Laedt eine Ressource als Path vom Classpath.
@@ -36,7 +30,8 @@ public abstract class CrefoConsistencyTestBase {
     }
 
     /**
-     * Laedt die Zuordnungen aus einer TestCrefos.properties Datei vom Classpath.
+     * Laedt die erwarteten Zuordnungen aus einer TestCrefos.properties Datei vom Classpath.
+     * Verwendet AB30XMLProperties fuer das Parsing.
      * Crefos ohne Kunden (leere Kundenliste) werden ignoriert.
      */
     protected Map<String, Set<String>> loadMappingsFromResource(String resourcePath) throws IOException, URISyntaxException {
@@ -47,64 +42,123 @@ public abstract class CrefoConsistencyTestBase {
             return mappings;
         }
 
-        List<String> lines = Files.readAllLines(path);
-        for (String line : lines) {
-            if (line.startsWith("#") || line.isBlank()) {
-                continue;
-            }
+        // Verwende AB30MapperUtil zum Laden der Properties
+        AB30MapperUtil ab30MapperUtil = new AB30MapperUtil();
+        Map<Long, AB30XMLProperties> ab30Map = ab30MapperUtil.initAb30CrefoPropertiesMap(path.toFile());
 
-            Matcher matcher = CREFO_PATTERN.matcher(line.trim());
-            if (matcher.matches()) {
-                String crefo = matcher.group(1);
-                String customersStr = matcher.group(2);
-
-                Set<String> customers = new HashSet<>();
-                if (!customersStr.isBlank()) {
-                    for (String customer : customersStr.split(";")) {
-                        String trimmed = customer.trim();
-                        if (!trimmed.isEmpty()) {
-                            customers.add(trimmed);
-                        }
-                    }
+        // Konvertiere zu String-basierter Map
+        for (Map.Entry<Long, AB30XMLProperties> entry : ab30Map.entrySet()) {
+            AB30XMLProperties props = entry.getValue();
+            List<String> customers = props.getUsedByCustomersList();
+            if (!customers.isEmpty()) {
+                // Kunden-Keys normalisieren (lowercase)
+                Set<String> normalizedCustomers = new HashSet<>();
+                for (String customer : customers) {
+                    normalizedCustomers.add(customer.toLowerCase(Locale.ROOT));
                 }
-                // Nur Crefos mit mindestens einem Kunden aufnehmen
-                if (!customers.isEmpty()) {
-                    mappings.put(crefo, customers);
-                }
+                mappings.put(String.valueOf(entry.getKey()), normalizedCustomers);
             }
         }
+
         return mappings;
     }
 
     /**
-     * Laedt die tatsaechlichen Zuordnungen aus den Relevanz_Positiv/Relevanz.properties Dateien.
+     * Laedt die tatsaechlichen Zuordnungen aus den REF-EXPORTS.
+     * Verwendet TestCustomer, TestScenario und TestCrefo.
      */
-    protected Map<String, Set<String>> loadActualMappings(String refExportsPath, List<String> customers)
+    protected Map<String, Set<String>> loadActualMappings(String refExportsPath, List<String> customerKeys)
             throws IOException, URISyntaxException {
         Map<String, Set<String>> mappings = new HashMap<>();
 
-        for (String customer : customers) {
-            String resourcePath = refExportsPath + "/" + customer + "/" + RELEVANZ_POSITIV + "/" + RELEVANZ_FILE;
-            Path path = getResourcePath(resourcePath);
+        Path basePath = getResourcePath(refExportsPath);
+        if (basePath == null || !Files.exists(basePath)) {
+            return mappings;
+        }
 
-            if (path == null || !Files.exists(path)) {
+        for (String customerKey : customerKeys) {
+            Path customerDir = basePath.resolve(customerKey);
+            if (!Files.exists(customerDir)) {
                 continue;
             }
 
-            List<String> lines = Files.readAllLines(path);
-            for (String line : lines) {
-                if (line.startsWith("#") || line.isBlank()) {
-                    continue;
-                }
+            // Erstelle TestCustomer mit den notwendigen Verzeichnissen
+            TestCustomer testCustomer = new TestCustomer(customerKey, customerKey);
+            testCustomer.setItsqRefExportsDir(customerDir.toFile());
+            // AB30-XMLs-Dir wird fuer das Laden der Relevanz nicht benoetigt,
+            // aber wir setzen es auf das gleiche Verzeichnis um NPEs zu vermeiden
+            testCustomer.setItsqAB30XmlsDir(customerDir.toFile());
 
-                Matcher matcher = RELEVANZ_PATTERN.matcher(line.trim());
-                if (matcher.matches()) {
-                    String crefo = matcher.group(1);
-                    mappings.computeIfAbsent(crefo, k -> new HashSet<>()).add(customer);
+            // Lade nur das Relevanz_Positiv Szenario
+            Path scenarioDir = customerDir.resolve(RELEVANZ_POSITIV);
+            if (Files.exists(scenarioDir)) {
+                try {
+                    // TestScenario liest automatisch die Relevanz.properties und erstellt TestCrefo-Objekte
+                    List<File> emptyXmlList = Collections.emptyList();
+                    TestScenario testScenario = new TestScenario(testCustomer, RELEVANZ_POSITIV, emptyXmlList);
+                    testCustomer.addTestScenario(testScenario);
+
+                    // Extrahiere alle positiven Crefos (pXX und xXX, nicht nXX)
+                    for (TestCrefo testCrefo : testScenario.getTestCrefosAsList()) {
+                        if (testCrefo.isShouldBeExported()) {
+                            String crefo = String.valueOf(testCrefo.getItsqTestCrefoNr());
+                            mappings.computeIfAbsent(crefo, k -> new HashSet<>()).add(customerKey.toLowerCase(Locale.ROOT));
+                        }
+                    }
+                } catch (RuntimeException e) {
+                    // Szenario konnte nicht geladen werden (z.B. fehlende Properties-Datei)
+                    System.err.println("Warnung: Szenario " + RELEVANZ_POSITIV + " fuer Kunde " + customerKey +
+                            " konnte nicht geladen werden: " + e.getMessage());
                 }
             }
         }
+
         return mappings;
+    }
+
+    /**
+     * Laedt TestCustomer-Objekte fuer alle Kunden in einem REF-EXPORTS Verzeichnis.
+     * Nützlich fuer erweiterte Tests, die auf die vollstaendigen Model-Objekte zugreifen muessen.
+     */
+    protected Map<String, TestCustomer> loadTestCustomers(String refExportsPath, List<String> customerKeys)
+            throws URISyntaxException {
+        Map<String, TestCustomer> customerMap = new TreeMap<>();
+
+        Path basePath = getResourcePath(refExportsPath);
+        if (basePath == null || !Files.exists(basePath)) {
+            return customerMap;
+        }
+
+        for (String customerKey : customerKeys) {
+            Path customerDir = basePath.resolve(customerKey);
+            if (!Files.exists(customerDir)) {
+                continue;
+            }
+
+            TestCustomer testCustomer = new TestCustomer(customerKey, customerKey);
+            testCustomer.setItsqRefExportsDir(customerDir.toFile());
+            testCustomer.setItsqAB30XmlsDir(customerDir.toFile());
+
+            // Lade alle Szenarien (Unterverzeichnisse)
+            File[] scenarioDirs = customerDir.toFile().listFiles(File::isDirectory);
+            if (scenarioDirs != null) {
+                for (File scenarioDir : scenarioDirs) {
+                    try {
+                        List<File> emptyXmlList = Collections.emptyList();
+                        TestScenario testScenario = new TestScenario(testCustomer, scenarioDir.getName(), emptyXmlList);
+                        testCustomer.addTestScenario(testScenario);
+                    } catch (RuntimeException e) {
+                        // Szenario konnte nicht geladen werden
+                        System.err.println("Warnung: Szenario " + scenarioDir.getName() + " fuer Kunde " + customerKey +
+                                " konnte nicht geladen werden: " + e.getMessage());
+                    }
+                }
+            }
+
+            customerMap.put(customerKey, testCustomer);
+        }
+
+        return customerMap;
     }
 
     /**
