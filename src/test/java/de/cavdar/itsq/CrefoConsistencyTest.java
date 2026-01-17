@@ -1,4 +1,4 @@
-package de.cavdar.itsq.old;
+package de.cavdar.itsq;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;

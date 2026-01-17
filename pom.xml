@@ -34,6 +34,9 @@
         <rsyntaxtextarea.version>3.5.2</rsyntaxtextarea.version>
         <junit.version>5.10.2</junit.version>
         <assertj-swing.version>3.17.1</assertj-swing.version>
+        <commons-io.version>2.21.0</commons-io.version>
+        <commons-lang.version>2.6</commons-lang.version>
+        <commons-collections4.version>4.5.0</commons-collections4.version>
     </properties>
 
     <build>
@@ -162,6 +165,22 @@
     </profiles>
 
     <dependencies>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons-io.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>${commons-lang.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
+            <version>${commons-collections4.version}</version>
+        </dependency>
         <!-- Logging -->
         <dependency>
             <groupId>log4j</groupId>
