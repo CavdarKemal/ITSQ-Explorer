@@ -5,6 +5,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.*;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.*;
 import java.util.*;
 import java.util.regex.*;
@@ -25,11 +27,13 @@ import static org.junit.jupiter.api.Assertions.*;
  *   -> Test prueft EXAKTE Uebereinstimmung
  *
  * Hinweis: Nur pXX und xXX Eintraege werden geprueft (nicht nXX).
+ *
+ * Testdaten liegen unter: src/test/resources/ITSQ/OLD/
  */
 @DisplayName("Crefo Konsistenz Tests (OLD)")
 class CrefoConsistencyTest {
 
-    private static final String BASE_PATH = "ITSQ/OLD";
+    private static final String BASE_PATH = "/ITSQ/OLD";
     private static final String ARCHIV_BESTAND_PH1 = BASE_PATH + "/ARCHIV-BESTAND-PH1";
     private static final String ARCHIV_BESTAND_PH2 = BASE_PATH + "/ARCHIV-BESTAND-PH2";
     private static final String REF_EXPORTS = BASE_PATH + "/REF-EXPORTS";
@@ -50,23 +54,35 @@ class CrefoConsistencyTest {
     private Map<String, Set<String>> actualCrefoToCustomers;
 
     @BeforeEach
-    void setUp() throws IOException {
-        phase1CrefoToCustomers = loadMappingsFromFile(Paths.get(ARCHIV_BESTAND_PH1, TEST_CREFOS_FILE));
-        phase2CrefoToCustomers = loadMappingsFromFile(Paths.get(ARCHIV_BESTAND_PH2, TEST_CREFOS_FILE));
+    void setUp() throws IOException, URISyntaxException {
+        phase1CrefoToCustomers = loadMappingsFromResource(ARCHIV_BESTAND_PH1 + "/" + TEST_CREFOS_FILE);
+        phase2CrefoToCustomers = loadMappingsFromResource(ARCHIV_BESTAND_PH2 + "/" + TEST_CREFOS_FILE);
         actualCrefoToCustomers = loadActualMappings();
     }
 
     /**
-     * Laedt die Zuordnungen aus einer TestCrefos.properties Datei.
+     * Laedt eine Ressource als Path vom Classpath.
      */
-    private Map<String, Set<String>> loadMappingsFromFile(Path testCrefosPath) throws IOException {
+    private Path getResourcePath(String resourcePath) throws URISyntaxException {
+        URL url = getClass().getResource(resourcePath);
+        if (url == null) {
+            return null;
+        }
+        return Paths.get(url.toURI());
+    }
+
+    /**
+     * Laedt die Zuordnungen aus einer TestCrefos.properties Datei vom Classpath.
+     */
+    private Map<String, Set<String>> loadMappingsFromResource(String resourcePath) throws IOException, URISyntaxException {
         Map<String, Set<String>> mappings = new HashMap<>();
 
-        if (!Files.exists(testCrefosPath)) {
+        Path path = getResourcePath(resourcePath);
+        if (path == null || !Files.exists(path)) {
             return mappings; // Leere Map wenn Datei nicht existiert
         }
 
-        List<String> lines = Files.readAllLines(testCrefosPath);
+        List<String> lines = Files.readAllLines(path);
         for (String line : lines) {
             if (line.startsWith("#") || line.isBlank()) {
                 continue;
@@ -95,17 +111,18 @@ class CrefoConsistencyTest {
     /**
      * Laedt die tatsaechlichen Zuordnungen aus den Relevanz_Positiv/Relevanz.properties Dateien.
      */
-    private Map<String, Set<String>> loadActualMappings() throws IOException {
+    private Map<String, Set<String>> loadActualMappings() throws IOException, URISyntaxException {
         Map<String, Set<String>> mappings = new HashMap<>();
 
         for (String customer : CUSTOMERS) {
-            Path relevanzPath = Paths.get(REF_EXPORTS, customer, RELEVANZ_POSITIV, RELEVANZ_FILE);
+            String resourcePath = REF_EXPORTS + "/" + customer + "/" + RELEVANZ_POSITIV + "/" + RELEVANZ_FILE;
+            Path path = getResourcePath(resourcePath);
 
-            if (!Files.exists(relevanzPath)) {
+            if (path == null || !Files.exists(path)) {
                 continue;
             }
 
-            List<String> lines = Files.readAllLines(relevanzPath);
+            List<String> lines = Files.readAllLines(path);
             for (String line : lines) {
                 if (line.startsWith("#") || line.isBlank()) {
                     continue;
@@ -125,27 +142,31 @@ class CrefoConsistencyTest {
 
     @Test
     @DisplayName("TestCrefos.properties (PHASE-1) sollte existieren")
-    void testCrefosPhase1FileShouldExist() {
-        Path path = Paths.get(ARCHIV_BESTAND_PH1, TEST_CREFOS_FILE);
+    void testCrefosPhase1FileShouldExist() throws URISyntaxException {
+        Path path = getResourcePath(ARCHIV_BESTAND_PH1 + "/" + TEST_CREFOS_FILE);
+        assertNotNull(path, "TestCrefos.properties (PHASE-1) sollte im Classpath existieren");
         assertTrue(Files.exists(path), "TestCrefos.properties (PHASE-1) sollte existieren: " + path);
         assertFalse(phase1CrefoToCustomers.isEmpty(), "PHASE-1 sollte mindestens einen Eintrag enthalten");
     }
 
     @Test
     @DisplayName("TestCrefos.properties (PHASE-2) sollte existieren")
-    void testCrefosPhase2FileShouldExist() {
-        Path path = Paths.get(ARCHIV_BESTAND_PH2, TEST_CREFOS_FILE);
+    void testCrefosPhase2FileShouldExist() throws URISyntaxException {
+        Path path = getResourcePath(ARCHIV_BESTAND_PH2 + "/" + TEST_CREFOS_FILE);
+        assertNotNull(path, "TestCrefos.properties (PHASE-2) sollte im Classpath existieren");
         assertTrue(Files.exists(path), "TestCrefos.properties (PHASE-2) sollte existieren: " + path);
         assertFalse(phase2CrefoToCustomers.isEmpty(), "PHASE-2 sollte mindestens einen Eintrag enthalten");
     }
 
     @Test
     @DisplayName("Relevanz_Positiv Dateien sollten existieren")
-    void relevanzPositivFilesShouldExist() {
+    void relevanzPositivFilesShouldExist() throws URISyntaxException {
         for (String customer : CUSTOMERS) {
-            Path relevanzPath = Paths.get(REF_EXPORTS, customer, RELEVANZ_POSITIV, RELEVANZ_FILE);
-            assertTrue(Files.exists(relevanzPath),
-                    "Relevanz.properties fuer " + customer + " sollte existieren: " + relevanzPath);
+            String resourcePath = REF_EXPORTS + "/" + customer + "/" + RELEVANZ_POSITIV + "/" + RELEVANZ_FILE;
+            Path path = getResourcePath(resourcePath);
+            assertNotNull(path, "Relevanz.properties fuer " + customer + " sollte im Classpath existieren");
+            assertTrue(Files.exists(path),
+                    "Relevanz.properties fuer " + customer + " sollte existieren: " + path);
         }
     }
 
