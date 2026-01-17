@@ -11,7 +11,19 @@
       "Bash(git commit -m \"$\\(cat <<''EOF''\nFeature: ItsqEditorView mit Dual-Modus \\(XML/Properties\\)\n\nItsqEditorView unterstuetzt jetzt zwei Modi je nach Dateityp:\n- XML-Modus: RSyntaxTextArea mit Syntax-Highlighting, Suche \\(F3/Shift+F3\\)\n- Properties-Modus: Tabellen-Editor mit Name/Wert-Spalten, CRUD-Buttons\n\nAenderungen:\n- ItsqEditorPanel: Toolbar mit Neu/Aendern/Loeschen/Filter/Speichern \\(JFormDesigner\\)\n- ItsqEditorView: CardLayout fuer Modus-Wechsel, JFormDesigner-Controls verwendet\n- PropertiesTableModel: Innere Klasse mit Filter und Kommentar-Erhaltung\n- Modus-abhaengige Button-Aktivierung via updateToolbarForMode\\(\\)\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nDocs: ItsqEditorView Dokumentation hinzugefuegt\n\n- gui.md: Neuer Abschnitt fuer ItsqEditorView mit Dual-Modus\n- CLAUDE_CONTEXT.md: Letzte Aenderungen und Resume-Prompt aktualisiert\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(unzip:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "mcp__filesystem__directory_tree",
+      "mcp__filesystem__list_directory",
+      "mcp__filesystem__create_directory",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nTest: CrefoConsistencyTest fuer ITSQ OLD Testdaten\n\nNeuer JUnit 5 Test zur Pruefung der Konsistenz zwischen:\n- TestCrefos.properties \\(PHASE-1 und PHASE-2\\)\n- Relevanz_Positiv/Relevanz.properties \\(REF-EXPORTS\\)\n\nFeatures:\n- PHASE-1 Tests: Prueft Untermenge-Bedingung \\(mindestens definierte Kunden\\)\n- PHASE-2 Tests: Prueft exakte Uebereinstimmung\n- Validierung: PHASE-1 muss Untermenge von PHASE-2 sein\n- Konsistenz-Report zur Uebersicht\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "filesystem",
+    "playwright",
+    "puppeteer"
+  ]
 }
