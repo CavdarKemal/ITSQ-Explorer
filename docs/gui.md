@@ -1,46 +1,46 @@
-# TemplateGUI Dokumentation
+# ITSQ-Explorer GUI Dokumentation
 
-## Übersicht
+## Uebersicht
 
-Die TemplateGUI ist eine Java Swing MDI-Anwendung (Multiple Document Interface) mit strikter **Design-View-Trennung**. Das Architekturkonzept basiert auf dem StandardMDIGUI-Framework.
+Die ITSQ-Explorer GUI ist eine Java Swing MDI-Anwendung (Multiple Document Interface) mit strikter **Design-View-Trennung**. Das Architekturkonzept basiert auf dem StandardMDIGUI-Framework.
 
 ## Architektur-Prinzipien
 
 ### Design-View-Trennung
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         ViewInfo                                │
-│                        (Interface)                              │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │ implements
-┌──────────────────────────┴──────────────────────────────────────┐
-│                         BaseView                                │
-│                   (abstrakte Klasse)                            │
-│              extends JInternalFrame                             │
-│                                                                 │
-│  Template Methods:                                              │
-│  - createPanel()         → Panel erstellen                      │
-│  - setupToolbarActions() → Button-Actions binden                │
-│  - setupListeners()      → Weitere Listener (optional)          │
-│                                                                 │
-│  Features:                                                      │
-│  - executeTask(Runnable) → Async mit SwingWorker                │
-│  - Cancel-Mechanismus                                           │
-│  - Progress-Anzeige                                             │
-└──────────────────────────┬──────────────────────────────────────┘
+                          ┌───────────────┐
+                          │   ViewInfo    │
+                          │  (Interface)  │
+                          └───────┬───────┘
+                                  │ implements
+┌──────────────────────────┴──────────────────────────────────┐
+│                         BaseView                            │
+│                   (abstrakte Klasse)                        │
+│              extends JInternalFrame                         │
+│                                                             │
+│  Template Methods:                                          │
+│  - createPanel()         → Panel erstellen                  │
+│  - setupToolbarActions() → Button-Actions binden            │
+│  - setupListeners()      → Weitere Listener (optional)      │
+│                                                             │
+│  Features:                                                  │
+│  - executeTask(Runnable) → Async mit SwingWorker            │
+│  - Cancel-Mechanismus                                       │
+│  - Progress-Anzeige                                         │
+└──────────────────────────┬──────────────────────────────────┘
                            │ verwendet
-┌──────────────────────────┴──────────────────────────────────────┐
-│                      BaseViewPanel                              │
-│                   (abstrakte Klasse)                            │
-│                                                                 │
-│  Wrapper für JFormDesigner-generierte Panels                    │
-│                                                                 │
-│  Abstrakte Methoden:                                            │
-│  - getViewToolbar()  → JToolBar                                 │
-│  - getProgressBar()  → JProgressBar                             │
-│  - getCancelButton() → JButton                                  │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────┴──────────────────────────────────┐
+│                      BaseViewPanel                          │
+│                   (abstrakte Klasse)                        │
+│                                                             │
+│  Wrapper fuer JFormDesigner-generierte Panels               │
+│                                                             │
+│  Abstrakte Methoden:                                        │
+│  - getViewToolbar()  → JToolBar                             │
+│  - getProgressBar()  → JProgressBar                         │
+│  - getCancelButton() → JButton                              │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ### Kernprinzip: Komposition statt Vererbung
@@ -53,438 +53,116 @@ Die TemplateGUI ist eine Java Swing MDI-Anwendung (Multiple Document Interface) 
 
 ```
 de.cavdar.gui
-├── design/                          # GUI-Komponenten
-│   ├── BaseViewPanel.java           # Basis-Panel mit Toolbar/Status
-│   ├── MainFrame.java               # Hauptfenster mit Dual-Toolbar Layout
-│   ├── DesktopPanel.java            # MDI-Desktop fuer Views
-│   ├── DatabaseViewPanel.java       # Panel fuer Datenbank-View
-│   ├── CustomerTreeViewPanel.java   # Panel fuer Kunden-Tree
-│   ├── ItsqTreeViewPanel.java       # Panel fuer ITSQ-Tree
-│   ├── EditorPanel.java             # Wrapper fuer Editor
-│   ├── InternalFrameEditor.java     # JFormDesigner-generiert
-│   └── ...ViewPanel.java            # Weitere View-Panels
-│
-├── model/                           # Datenmodelle
-│   ├── AppConfig.java               # Singleton Konfigurationsverwaltung
-│   ├── ConfigEntry.java             # Typ-sicherer Konfigurations-Eintrag
-│   ├── ConnectionInfo.java          # Datenbank-Verbindungsinfo
-│   ├── TestCustomer.java            # Kunde mit Szenarien
-│   ├── TestScenario.java            # Szenario mit Testfaellen
-│   └── TestCrefo.java               # Testfall
-│
-├── util/                            # Utility-Klassen
-│   ├── ConnectionManager.java       # Verbindungsverwaltung
-│   ├── TestDataLoader.java          # JSON Laden/Speichern
-│   └── IconLoader.java              # Icon-Laden aus Resources
-│
-├── exception/                       # Exceptions
-│   └── ConfigurationException.java  # Konfigurations-Fehler
-│
-└── view/                            # Business-Logik
-    ├── ViewInfo.java                # Interface fuer View-Metadaten
-    ├── BaseView.java                # Abstrakte View-Basisklasse (mit config-Feld)
-    ├── Main.java                # Einstiegspunkt mit main()
-    ├── DatabaseView.java            # Datenbank-View mit SQL-Editor
-    ├── CustomerTreeView.java        # Checkbox-Tree fuer Kunden (JSON)
-    ├── ItsqTreeView.java            # Tree fuer ITSQ-Verzeichnis
-    ├── EditorView.java              # Text-Editor
-    └── ...View.java                 # Weitere Views
+├── Main.java                   # Einstiegspunkt
+├── design/
+│   ├── base/                   # BaseViewPanel, MainFrame, DesktopPanel, SettingsPanel, EmbeddablePanel
+│   └── db/                     # DatabaseViewPanel
+├── view/
+│   ├── base/                   # BaseView, ViewInfo
+│   ├── db/                     # DatabaseView
+│   └── itsq/                   # ItsqExplorerView
+├── model/base/                 # AppConfig, ConfigEntry, ConnectionInfo
+├── util/                       # Utilities
+├── exception/                  # Exceptions
+└── itsq/                       # ITSQ Explorer Subsystem (46 Klassen)
+    ├── design/                 # ItsqMainPanel, ItsqTreePanel, ItsqEditorPanel, etc.
+    ├── model/                  # ItsqItem, ItsqRoot, ItsqCustomer, ItsqScenario, etc.
+    ├── tree/                   # ItsqTreeModel, ItsqTreeNode, etc.
+    └── view/                   # ItsqMainView, ItsqTreeView, ItsqEditorView, etc.
 ```
 
 ## Klassen-Dokumentation
 
 ### ViewInfo (Interface)
 
-Definiert Metadaten für automatische Menü- und Toolbar-Generierung.
+Definiert Metadaten fuer automatische Menue- und Toolbar-Generierung.
 
 ```java
 public interface ViewInfo {
-    String getMenuLabel();                    // Menü-Text (erforderlich)
+    String getMenuLabel();                    // Menue-Text (erforderlich)
     default String getToolbarLabel();         // Toolbar-Text (optional)
     default Icon getIcon();                   // Icon (optional)
-    default KeyStroke getKeyboardShortcut();  // Tastenkürzel (optional)
-    default String getMenuGroup();            // Menü-Gruppe (optional)
+    default KeyStroke getKeyboardShortcut();  // Tastenkuerzel (optional)
+    default String getMenuGroup();            // Menue-Gruppe (optional)
     default String getToolbarTooltip();       // Tooltip (optional)
 }
 ```
 
 ### BaseViewPanel (Abstrakt)
 
-Abstrakte Basisklasse für alle GUI-Panels. Dient als Wrapper für JFormDesigner-generierte Komponenten.
+Abstrakte Basisklasse fuer alle GUI-Panels.
 
 ```java
 public abstract class BaseViewPanel extends JPanel {
-    // Abstrakte Methoden - von Subklassen zu implementieren
     public abstract JToolBar getViewToolbar();
     public abstract JProgressBar getProgressBar();
     public abstract JButton getCancelButton();
-
-    // Progress-Steuerung
     public void setProgressVisible(boolean visible, boolean indeterminate);
 }
 ```
 
 ### BaseView (Abstrakt)
 
-Abstrakte Basisklasse für alle Views. Implementiert das Template Method Pattern.
+Abstrakte Basisklasse fuer alle Views. Implementiert das Template Method Pattern.
 
 ```java
 public abstract class BaseView extends JInternalFrame implements ViewInfo {
     protected BaseViewPanel panel;
     protected SwingWorker<Void, Void> currentWorker;
 
-    // Template Methods - von Subklassen zu implementieren
     protected abstract BaseViewPanel createPanel();
     protected abstract void setupToolbarActions();
-    protected void setupListeners() { }  // Optional
-
-    // Async-Task-Ausführung mit Progress
+    protected void setupListeners() { }
     protected void executeTask(Runnable taskLogic);
 }
 ```
 
-### Main
-
-Hauptanwendungsklasse mit MDI-Desktop-Management.
-
-**Features:**
-- JDesktopPane für MDI-Fenster
-- View-Registrierung mit `registerView(Supplier<BaseView>)`
-- Menü-Actions (Open, Exit, Copy, Paste, Tile)
-- Toolbar-Actions (New Editor, New TreeView)
-
-## Neue View erstellen
-
-### Schritt 1: JFormDesigner-Panel erstellen
-
-Erstellen Sie ein neues Panel in JFormDesigner (z.B. `InternalFrameMyView.java`).
-
-### Schritt 2: Panel-Wrapper erstellen
-
-```java
-package de.cavdar.gui.design;
-
-import de.cavdar.gui.design.BaseViewPanel;
-
-public class MyViewPanel extends BaseViewPanel {
-    private InternalFrameMyView myView;
-
-    @Override
-    protected void initComponents() {
-        myView = new InternalFrameMyView();
-        add(myView, BorderLayout.CENTER);
-    }
-
-    @Override
-    public JToolBar getViewToolbar() {
-        return myView.getToolBarMain();
-    }
-
-    @Override
-    public JProgressBar getProgressBar() {
-        return myView.getProgressBar();  // oder null
-    }
-
-    @Override
-    public JButton getCancelButton() {
-        return myView.getCancelButton();  // oder null
-    }
-
-    // Getter für spezifische Komponenten
-    public JButton getMyButton() {
-        return myView.getMyButton();
-    }
-}
-```
-
-### Schritt 3: View-Klasse erstellen
-
-```java
-package de.cavdar.gui.view;
-
-import de.cavdar.gui.view.BaseView;
-
-public class MyViewView extends BaseView {
-    private MyViewPanel myPanel;
-
-    public MyViewView() {
-        super("Meine View");
-    }
-
-    @Override
-    protected BaseViewPanel createPanel() {
-        myPanel = new MyViewPanel();
-        return myPanel;
-    }
-
-    @Override
-    protected void setupToolbarActions() {
-        myPanel.getMyButton().addActionListener(e -> doSomething());
-    }
-
-    @Override
-    protected void setupListeners() {
-        // Weitere Listener hier
-    }
-
-    // ViewInfo Implementation
-    @Override
-    public String getMenuLabel() {
-        return "Meine View";
-    }
-
-    @Override
-    public KeyStroke getKeyboardShortcut() {
-        return KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_DOWN_MASK);
-    }
-
-    // Business-Logik
-    private void doSomething() {
-        executeTask(() -> {
-            // Hintergrund-Arbeit hier
-            // Progress wird automatisch angezeigt
-        });
-    }
-}
-```
-
-### Schritt 4: View registrieren (optional)
-
-In `Main.registerDefaultViews()`:
-
-```java
-private void registerDefaultViews() {
-    registerView(TreeViewView::new);
-    registerView(EditorView::new);
-    registerView(MyViewView::new);  // Neue View
-}
-```
-
-## Async-Task-Handling
-
-Die `executeTask()`-Methode führt Hintergrundaufgaben mit SwingWorker aus:
-
-```java
-private void processData() {
-    executeTask(() -> {
-        // Dies läuft im Hintergrund-Thread
-        for (int i = 0; i < 100; i++) {
-            // Arbeit...
-
-            // UI-Updates müssen auf EDT erfolgen:
-            SwingUtilities.invokeLater(() -> {
-                updateUI();
-            });
-        }
-    });
-}
-```
-
-**Features:**
-- Automatische Progress-Bar-Anzeige (indeterminate)
-- Cancel-Button wird sichtbar
-- Bei Abbruch: Meldung "Aktion abgebrochen"
-
-## Menü-Struktur
-
-| Menü | Item | Shortcut | Funktion |
-|------|------|----------|----------|
-| File | Open | Ctrl+O | Datei in neuem Editor öffnen |
-| File | Exit | Ctrl+Q | Anwendung beenden |
-| Edit | Copy | Ctrl+C | Text aus aktivem Editor kopieren |
-| Edit | Paste | Ctrl+V | Text in aktiven Editor einfügen |
-| Window | Horizontal | - | Fenster horizontal anordnen |
-| Window | Vertical | - | Fenster vertikal anordnen |
-
-## Toolbar
-
-| Button | Funktion |
-|--------|----------|
-| New Editor | Neues Editor-Fenster erstellen |
-| New TreeView | Neues TreeView-Fenster erstellen |
-
-## Abhängigkeiten
-
-```xml
-<dependencies>
-    <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
-        <version>2.0.9</version>
-    </dependency>
-    <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-reload4j</artifactId>
-        <version>2.0.6</version>
-    </dependency>
-    <dependency>
-        <groupId>log4j</groupId>
-        <artifactId>log4j</artifactId>
-        <version>1.2.12</version>
-    </dependency>
-</dependencies>
-```
-
-## Anwendung starten
-
-### Aus IDE (IntelliJ)
-
-Main-Klasse: `de.cavdar.gui.Main`
-
-### Aus Distribution
-
-```cmd
-cd target\TemplateGUI-1.0.0-SNAPSHOT
-startGUI.cmd
-```
-
-Mit Debug-Modus:
-```cmd
-startGUI.cmd D
-```
-
-## Klassendiagramm
+## Anwendungslayout
 
 ```
-                          ┌───────────────┐
-                          │   ViewInfo    │
-                          │  (interface)  │
-                          └───────┬───────┘
-                                  │
-┌─────────────────┐       ┌───────┴───────┐
-│  BaseViewPanel  │◄──────│   BaseView    │
-│   (abstract)    │       │  (abstract)   │
-└────────┬────────┘       └───────┬───────┘
-         │                        │
-    ┌────┴────┐              ┌────┴────┐
-    │         │              │         │
-┌───┴───┐ ┌───┴───┐    ┌─────┴───┐ ┌───┴─────┐
-│TreeView│ │Editor │    │TreeView │ │ Editor  │
-│ Panel  │ │ Panel │    │  View   │ │  View   │
-└───┬────┘ └───┬───┘    └─────────┘ └─────────┘
-    │          │
-    │          │
-┌───┴──────────┴───┐
-│ JFormDesigner    │
-│ Generated Panels │
-└──────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  Config-Toolbar                                                              │
+│  [Config▼][↻] [DB▼][🗄] [Source▼] [Type▼] [Rev▼] ☐Dump ☐SFTP ☐Export...     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  View-Toolbar                                                                │
+│  [Views:] [ITSQ Explorer]                                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│                         JDesktopPane                                         │
+│                                                                              │
+│      ┌─────────────────────────────┐   ┌─────────────────────────────┐      │
+│      │ ItsqExplorerView            │   │ DatabaseView                │      │
+│      │  📁 ITSQ Root               │   │  [SQL-Editor]               │      │
+│      │   └─📁 Customers            │   │  [Ergebnis-Tabelle]         │      │
+│      │      └─📁 Scenarios         │   │                             │      │
+│      │         └─📄 Files          │   │                             │      │
+│      └─────────────────────────────┘   └─────────────────────────────┘      │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Konfigurationsverwaltung
+### Dual-Toolbar Konzept
 
-### AppConfig
+**Config-Toolbar** (obere Zeile):
+- Konfigurationsdatei-Auswahl (`*-config.properties`)
+- DB-Verbindungs-Auswahl
+- Testquellen, Testtypen, ITSQ-Revisionen
+- Feature-Flags (Checkboxen)
 
-Singleton-Konfigurationsmanager fuer die Anwendung. Verwaltet Properties aus `config.properties`.
-
-```java
-// Zugriff auf Konfiguration
-AppConfig cfg = AppConfig.getInstance();
-
-// Werte lesen
-String value = cfg.getProperty("KEY");
-String value = cfg.getProperty("KEY", "default");
-String[] array = cfg.getArray("KEY");        // Semikolon-getrennt
-boolean flag = cfg.getBool("KEY");
-int num = cfg.getInt("KEY", defaultValue);
-
-// Werte setzen und speichern
-cfg.setProperty("KEY", "value");
-cfg.save();
-
-// Konfiguration aus anderer Datei laden
-cfg.loadFrom("path/to/config.properties");
-cfg.reload();
-```
-
-**Konfigurationsdatei-Prioritaet:**
-1. System Property: `-Dconfig.file=path`
-2. Environment Variable: `CONFIG_FILE_PATH`
-3. Default: `config.properties` (im Arbeitsverzeichnis)
-
-### ConnectionManager
-
-Utility-Klasse fuer die Verwaltung von Datenbankverbindungen.
-
-```java
-// Verbindungen laden und abrufen
-ConnectionManager.loadConnections();
-List<ConnectionInfo> conns = ConnectionManager.getConnections();
-String[] names = ConnectionManager.getConnectionNames();
-ConnectionInfo conn = ConnectionManager.getConnection("name");
-
-// Verbindung speichern/loeschen
-ConnectionManager.saveConnection(conn);
-ConnectionManager.deleteConnection("name");
-
-// Letzte verwendete Verbindung
-String last = ConnectionManager.getLastConnectionName();
-ConnectionManager.setLastConnectionName("name");
-
-// Listener fuer Aenderungen
-ConnectionManager.addListener(listener);
-ConnectionManager.removeListener(listener);
-```
-
-### ConnectionInfo
-
-Datenmodell fuer eine Datenbankverbindung.
-
-```java
-ConnectionInfo conn = new ConnectionInfo(
-    "MeinDB",                              // Name
-    "org.postgresql.Driver",               // JDBC Driver
-    "jdbc:postgresql://localhost:5432/db", // URL
-    "user",                                // Username
-    "pass"                                 // Password
-);
-
-// Serialisierung (Passwort Base64-kodiert)
-String data = conn.serialize();
-ConnectionInfo restored = ConnectionInfo.deserialize(data);
-```
-
-## DatabaseView
-
-Die DatabaseView bietet einen vollstaendigen SQL-Client mit:
-
-### Features
-
-- **Verbindungsverwaltung**: Speichern, Laden, Loeschen von Verbindungen
-- **Tabellen-Browser**: Lazy-Loading von Tabellen und Spalten mit Typen
-- **SQL-Editor**: Syntax fuer SQL-Abfragen
-- **SQL-History**: Automatische Speicherung ausgefuehrter Abfragen
-- **Favoriten**: Wichtige Abfragen als Favoriten speichern
-- **CSV-Export**: Ergebnisse als CSV exportieren
-
-### SQL-History und Favoriten
-
-```properties
-# In ene-config.properties gespeichert:
-SQL_HISTORY=SELECT * FROM users;;SELECT COUNT(*) FROM orders
-SQL_FAVORITES=SELECT * FROM products WHERE active=true
-```
-
-### Unterstuetzte JDBC-Treiber
-
-| Datenbank | Treiber-Klasse |
-|-----------|----------------|
-| PostgreSQL | org.postgresql.Driver |
-| MySQL | com.mysql.cj.jdbc.Driver |
-| Oracle | oracle.jdbc.OracleDriver |
-| SQL Server | com.microsoft.sqlserver.jdbc.SQLServerDriver |
-| H2 | org.h2.Driver |
-| SQLite | org.sqlite.JDBC |
+**View-Toolbar** (zweite Zeile):
+- Buttons zum Oeffnen der registrierten Views
+- Dynamisch basierend auf `registerView()` Aufrufen
 
 ## ItsqExplorerView (ITSQ-TestSet Verwaltung)
 
-Die ItsqExplorerView bietet eine Verwaltungsoberfläche für ITSQ-Testsets mit umfangreichen Filterfunktionen.
+Die ItsqExplorerView bietet eine Verwaltungsoberflaeche fuer ITSQ-Testsets.
 
 ### Features
 
 - **TestSet-Auswahl**: ComboBox mit Historie der zuletzt verwendeten Verzeichnisse
-- **Mehrfache Filter**: Kombinierbare Filter für präzise Suche
+- **Mehrfache Filter**: Kombinierbare Filter fuer praezise Suche
 - **Tree-Ansicht**: Hierarchische Darstellung der ITSQ-Verzeichnisstruktur
-- **Detail-Views**: Kontextabhängige Detailansichten per CardLayout
+- **Detail-Views**: Kontextabhaengige Detailansichten per CardLayout
 
 ### Filter-Funktionen
 
@@ -515,68 +193,15 @@ ITSQ/
         └── ...
 ```
 
-### Tastenkürzel
+### Tastenkuerzel
 
 | Shortcut | Funktion |
 |----------|----------|
-| Ctrl+J | ItsqExplorerView öffnen |
-
-## SettingsPanel
-
-Das SettingsPanel wird links im Hauptfenster angezeigt und bietet schnellen Zugriff auf:
-
-- **DB-Verbindung**: Auswahl der aktiven Datenbankverbindung
-- **Datenbank-Button**: Oeffnet die DatabaseView mit der ausgewaehlten Verbindung
-- **Kunde**: Auswahl des aktiven Kunden (aus AVAILABLE_CUSTOMERS)
-- **Standard-Treiber**: Anzeige des konfigurierten Standard-JDBC-Treibers
-
-Das Panel reagiert automatisch auf Aenderungen der Verbindungsliste (Observer Pattern).
-
-## Anwendungslayout
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  Config-Toolbar                                                              │
-│  [Config▼][↻] [DB▼][🗄] [Source▼] [Type▼] [Rev▼] ☐Dump ☐SFTP ☐Export...     │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  View-Toolbar                                                                │
-│  [Views:] [Sample] [Prozess] [Analyse] [Tree] [Customer] [Editor] [ITSQ]    │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│                         JDesktopPane                                         │
-│                                                                              │
-│      ┌─────────────────────────────┐   ┌─────────────────────────────┐      │
-│      │ CustomerTreeView            │   │ DatabaseView                │      │
-│      │  📁 Kunden                  │   │  [SQL-Editor]               │      │
-│      │   └─📁 Szenarien           │   │  [Ergebnis-Tabelle]         │      │
-│      │      └─📄 Testfaelle       │   │                             │      │
-│      └─────────────────────────────┘   └─────────────────────────────┘      │
-│                                                                              │
-│      ┌─────────────────────────────┐                                        │
-│      │ ItsqTreeView                │                                        │
-│      │  📁 ITSQ                    │                                        │
-│      │   └─📁 ARCHIV-BESTAND      │                                        │
-│      │   └─📁 REF-EXPORTS         │                                        │
-│      └─────────────────────────────┘                                        │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Dual-Toolbar Konzept
-
-**Config-Toolbar** (obere Zeile):
-- Konfigurationsdatei-Auswahl (`*-config.properties`)
-- DB-Verbindungs-Auswahl
-- Testquellen, Testtypen, ITSQ-Revisionen
-- Feature-Flags (Checkboxen)
-
-**View-Toolbar** (zweite Zeile):
-- Buttons zum Oeffnen der registrierten Views
-- Dynamisch basierend auf `registerView()` Aufrufen
+| Ctrl+J | ItsqExplorerView oeffnen |
 
 ## ItsqEditorView (Datei-Editor)
 
-Die ItsqEditorView ist ein Dual-Modus-Editor, der je nach Dateityp unterschiedliche Bearbeitungsmodi bietet.
+Die ItsqEditorView ist ein Dual-Modus-Editor.
 
 ### Modi
 
@@ -596,52 +221,291 @@ Die ItsqEditorView ist ein Dual-Modus-Editor, der je nach Dateityp unterschiedli
 ### Properties-Modus Features
 
 - **Tabellen-Editor** mit Spalten "Name" und "Wert"
-- **CRUD-Buttons** in der Toolbar:
-  - **Neu**: Neuen Eintrag hinzufuegen
-  - **Aendern**: Ausgewaehlten Eintrag bearbeiten (auch per Doppelklick)
-  - **Loeschen**: Ausgewaehlten Eintrag entfernen
+- **CRUD-Buttons** in der Toolbar: Neu, Aendern, Loeschen
 - **Live-Filter**: Filtert sofort nach Name oder Wert
 - **Kommentar-Erhaltung**: Zeilen mit `#` oder `!` bleiben beim Speichern erhalten
 
-### Toolbar
+## DatabaseView
+
+Die DatabaseView bietet einen vollstaendigen SQL-Client.
+
+### Features
+
+- **Verbindungsverwaltung**: Speichern, Laden, Loeschen von Verbindungen
+- **Tabellen-Browser**: Lazy-Loading von Tabellen und Spalten mit Typen
+- **SQL-Editor**: Syntax fuer SQL-Abfragen
+- **SQL-History**: Automatische Speicherung ausgefuehrter Abfragen
+- **Favoriten**: Wichtige Abfragen als Favoriten speichern
+- **CSV-Export**: Ergebnisse als CSV exportieren
+
+### Unterstuetzte JDBC-Treiber
+
+| Datenbank | Treiber-Klasse |
+|-----------|----------------|
+| PostgreSQL | org.postgresql.Driver |
+| MySQL | com.mysql.cj.jdbc.Driver |
+| Oracle | oracle.jdbc.OracleDriver |
+| SQL Server | com.microsoft.sqlserver.jdbc.SQLServerDriver |
+| H2 | org.h2.Driver |
+| SQLite | org.sqlite.JDBC |
+
+## Konfigurationsverwaltung
+
+### AppConfig
+
+Singleton-Konfigurationsmanager. Verwaltet Properties aus `config.properties`.
+
+```java
+AppConfig cfg = AppConfig.getInstance();
+
+// Werte lesen
+String value = cfg.getProperty("KEY");
+String value = cfg.getProperty("KEY", "default");
+String[] array = cfg.getArray("KEY");        // Semikolon-getrennt
+boolean flag = cfg.getBool("KEY");
+int num = cfg.getInt("KEY", defaultValue);
+
+// Werte setzen und speichern
+cfg.setProperty("KEY", "value");
+cfg.save();
+
+// Konfiguration aus anderer Datei laden
+cfg.loadFrom("path/to/config.properties");
+cfg.reload();
+```
+
+**Konfigurationsdatei-Prioritaet:**
+1. System Property: `-Dconfig.file=path`
+2. Environment Variable: `CONFIG_FILE_PATH`
+3. Default: `config.properties` (im Arbeitsverzeichnis)
+
+### ConnectionManager
+
+Utility-Klasse fuer die Verwaltung von Datenbankverbindungen.
+
+```java
+ConnectionManager.loadConnections();
+List<ConnectionInfo> conns = ConnectionManager.getConnections();
+String[] names = ConnectionManager.getConnectionNames();
+ConnectionInfo conn = ConnectionManager.getConnection("name");
+
+ConnectionManager.saveConnection(conn);
+ConnectionManager.deleteConnection("name");
+
+String last = ConnectionManager.getLastConnectionName();
+ConnectionManager.setLastConnectionName("name");
+
+ConnectionManager.addListener(listener);
+ConnectionManager.removeListener(listener);
+```
+
+## ITSQ-Subsystem Architektur
+
+### Model-Klassen (itsq/model/)
 
 ```
-[Neu] [Aendern] [Loeschen] | Filter: [ComboBox] | [Speichern] ... [Status]
+ItsqItem (Interface)
+    │
+    ├── ItsqRoot           # Wurzel-Element
+    ├── ItsqCustomer       # Kunde (c01, c02, ...)
+    ├── ItsqScenario       # Szenario (Relevanz_Positiv, ...)
+    ├── ItsqRefExports     # REF-EXPORTS Verzeichnis
+    ├── ItsqRefExportsPhase # PHASE-1, PHASE-2
+    ├── ItsqArchivBestand  # ARCHIV-BESTAND Verzeichnis
+    ├── ItsqArchivBestandPhase # PHASE-1, PHASE-2
+    ├── ItsqXmlFile        # XML-Datei
+    ├── ItsqPropertiesFile # Properties-Datei
+    └── ItsqOptionsFile    # Options.cfg
 ```
 
-- Buttons "Neu/Aendern/Loeschen" sind nur im Properties-Modus aktiv
-- Filter-ComboBox dient als Suche (XML) oder Filter (Properties)
-- Status-Label zeigt Lade-/Speicher-Meldungen
-
-### Technische Implementierung
+### TreeNode-Klassen (itsq/tree/)
 
 ```
-ItsqEditorPanel (JFormDesigner)
-└── ItsqEditorView (View-Logik)
-    ├── CardLayout fuer Modus-Wechsel
-    ├── RSyntaxTextArea fuer XML
-    ├── JTable + PropertiesTableModel fuer Properties
-    └── updateToolbarForMode() fuer Button-Aktivierung
+ItsqTreeNode (abstrakt)
+    │
+    ├── ItsqRootTreeNode
+    ├── ItsqCustomerTreeNode
+    ├── ItsqScenarioTreeNode
+    ├── ItsqRefExportsTreeNode
+    ├── ItsqRefExportsPhaseTreeNode
+    ├── ItsqArchivBestandTreeNode
+    ├── ItsqArchivBestandPhaseTreeNode
+    ├── ItsqXmlTreeNode
+    ├── ItsqPropertiesTreeNode
+    └── ItsqOptionsTreeNode
 ```
 
-## Konfigurationsdatei (config.properties)
+### View-Klassen (itsq/view/)
 
-```properties
-# Window - Fensterposition und Groesse
-LAST_WINDOW_WIDTH=1200
-LAST_WINDOW_HEIGHT=800
-LAST_WINDOW_X_POS=100
-LAST_WINDOW_Y_POS=100
-LAST_LEFT_SPLIT_DIVIDER=250
-LAST_MAIN_SPLIT_DIVIDER=300
+```
+ItsqItemSelectable (Interface)
+    │
+    ├── ItsqMainView       # Haupt-Container
+    ├── ItsqTreeView       # Tree-Ansicht
+    ├── ItsqViewTabView    # Tab-Container
+    ├── ItsqEditorView     # Datei-Editor
+    ├── ItsqRootView       # Root-Details
+    ├── ItsqCustomerView   # Kunden-Details
+    ├── ItsqScenarioView   # Szenario-Details
+    ├── ItsqRefExportsView # REF-EXPORTS-Details
+    ├── ItsqRefExportsPhaseView
+    ├── ItsqArchivBestandView
+    └── ItsqArchibBestandPhaseView
+```
 
-# Database - Datenbankverbindungen
-DB_CONNECTIONS=MeinDB|org.postgresql.Driver|jdbc:postgresql://...|user|cGFzcw==
-LAST_DB_CONNECTION=MeinDB
-SQL_HISTORY=SELECT * FROM users
-SQL_FAVORITES=
+## Neue View erstellen
 
-# Settings - Anwendungseinstellungen
-AVAILABLE_CUSTOMERS=Kunde1;Kunde2;Kunde3
-DEFAULT_DRIVER=org.postgresql.Driver
+### Schritt 1: JFormDesigner-Panel erstellen
+
+Erstellen Sie ein neues Panel in JFormDesigner.
+
+### Schritt 2: Panel-Wrapper erstellen
+
+```java
+package de.cavdar.gui.design.myview;
+
+public class MyViewPanel extends BaseViewPanel {
+    private InternalFrameMyView myView;
+
+    @Override
+    protected void initComponents() {
+        myView = new InternalFrameMyView();
+        add(myView, BorderLayout.CENTER);
+    }
+
+    @Override
+    public JToolBar getViewToolbar() {
+        return myView.getToolBarMain();
+    }
+
+    @Override
+    public JProgressBar getProgressBar() {
+        return myView.getProgressBar();
+    }
+
+    @Override
+    public JButton getCancelButton() {
+        return myView.getCancelButton();
+    }
+
+    public JButton getMyButton() {
+        return myView.getMyButton();
+    }
+}
+```
+
+### Schritt 3: View-Klasse erstellen
+
+```java
+package de.cavdar.gui.view.myview;
+
+public class MyViewView extends BaseView {
+    private MyViewPanel myPanel;
+
+    public MyViewView() {
+        super("Meine View");
+    }
+
+    @Override
+    protected BaseViewPanel createPanel() {
+        myPanel = new MyViewPanel();
+        return myPanel;
+    }
+
+    @Override
+    protected void setupToolbarActions() {
+        myPanel.getMyButton().addActionListener(e -> doSomething());
+    }
+
+    @Override
+    public String getMenuLabel() {
+        return "Meine View";
+    }
+
+    @Override
+    public KeyStroke getKeyboardShortcut() {
+        return KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_DOWN_MASK);
+    }
+
+    private void doSomething() {
+        executeTask(() -> {
+            // Hintergrund-Arbeit
+        });
+    }
+}
+```
+
+### Schritt 4: View registrieren
+
+In `Main.registerDefaultViews()`:
+
+```java
+private void registerDefaultViews() {
+    registerView(ItsqExplorerView::new);
+    registerView(MyViewView::new);  // Neue View
+}
+```
+
+## Async-Task-Handling
+
+```java
+private void processData() {
+    executeTask(() -> {
+        // Laeuft im Hintergrund-Thread
+        for (int i = 0; i < 100; i++) {
+            // Arbeit...
+            SwingUtilities.invokeLater(() -> updateUI());
+        }
+    });
+}
+```
+
+**Features:**
+- Automatische Progress-Bar-Anzeige (indeterminate)
+- Cancel-Button wird sichtbar
+- Bei Abbruch: Meldung "Aktion abgebrochen"
+
+## Abhaengigkeiten
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>2.0.9</version>
+    </dependency>
+    <dependency>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
+        <version>1.2.12</version>
+    </dependency>
+    <dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <version>42.7.4</version>
+    </dependency>
+    <dependency>
+        <groupId>com.fifesoft</groupId>
+        <artifactId>rsyntaxtextarea</artifactId>
+        <version>3.4.0</version>
+    </dependency>
+</dependencies>
+```
+
+## Anwendung starten
+
+### Aus IDE (IntelliJ)
+
+Main-Klasse: `de.cavdar.gui.Main`
+
+### Mit Maven
+
+```bash
+mvn exec:java
+```
+
+### Mit Debug-Modus
+
+```bash
+mvn exec:java -Dexec.args="D"
 ```

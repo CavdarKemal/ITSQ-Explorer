@@ -1,12 +1,12 @@
-# Claude Code Kontext - TemplateGUI
+# Claude Code Kontext - ITSQ-Explorer
 
 ## Projekt-Uebersicht
 
-**Pfad:** `E:\Projekte\ClaudeCode\TemplateGUI`
+**Pfad:** `E:\Projekte\ClaudeCode\ITSQ-Explorer`
 **Typ:** Java Swing MDI-Anwendung (Multi-Document Interface)
 **Build:** Maven, Java 17
-**Package:** `de.cavdar.gui`
-**Ziel:** Template-Projekt das Funktionalitaeten aus StandardMDIGUI und ITSQ-Test vereint
+**Package:** `de.cavdar.gui` (GUI) + `de.cavdar.itsq` (Logik)
+**Ziel:** ITSQ-Test-Set Verwaltung und Konsistenzpruefung
 
 ## Quellprojekte
 
@@ -14,12 +14,27 @@
 |---------|---------|
 | **StandardMDIGUI** | MDI-Framework, Views, Design-Pattern, Docker-Setup |
 | **ITSQ-Test** | Maven-Artefakt-Integration, Assembly-Konzept, Dokumentation |
+| **TemplateGUI** | Basis-Projekt, abgespeckt auf ITSQ-Funktionalitaet |
 
 ## Erstellungsdatum
 
 **03.01.2026** - Initiale Erstellung durch Zusammenfuehrung der Quellprojekte
 
 ## Letzte Aenderungen
+
+**18.01.2026** - CrefoConsistency Tests mit Model-Klassen:
+- **CrefoConsistencyTestBase**: Basisklasse mit gemeinsamer Funktionalitaet
+- **CrefoConsistencyTest**: Tests fuer OLD ITSQ-Struktur
+- **CrefoConsistencyNewTest**: Tests fuer NEW ITSQ-Struktur (unter newstructure Package)
+- Verwendet Model-Klassen (TestCustomer, TestScenario, TestCrefo)
+- Unterstuetzt Classpath-Ressourcen fuer Testdaten
+
+**17.01.2026** - Neue Model-Klassen fuer ITSQ-Daten:
+- **TestCustomer**: Repraesentiert einen Testkunden (c01-c05)
+- **TestScenario**: Repraesentiert ein Szenario (Relevanz_Positiv, etc.)
+- **TestCrefo**: Repraesentiert einen Testfall (pXX, xXX, nXX)
+- **AB30XMLProperties**: Parsing von TestCrefos.properties
+- Trennung von GUI (de.cavdar.gui) und Logik (de.cavdar.itsq)
 
 **07.01.2026** - Umgebungs-Lock-System:
 - **EnvironmentLockManager**: Neue Utility-Klasse mit ServerSocket (Ports 47100-47102)
@@ -39,50 +54,51 @@
 - **CardLayout**: Automatischer Modus-Wechsel basierend auf Dateityp (.xml vs .cfg/.properties)
 - **PropertiesTableModel**: Innere Klasse mit Filter und Kommentar-Erhaltung
 
-**05.01.2026** - Itsq-Panels und Views ueberarbeitet:
-- **ItsqArchivBestandPhasePanel/View**: Aktualisiert
-- **ItsqCustomerPanel/View**: Aktualisiert
-- **ItsqRefExportsPhasePanel/View**: Aktualisiert
-
-**04.01.2026** - Package-Refactoring:
-- **Main.java** nach `de.cavdar.gui` verschoben (vorher MainView.java in view/)
-- **Package `jfd` umbenannt zu `itsq`**: Bessere Namenskonvention
-- **Sub-Packages eingefuehrt**: design/base, design/prozess, view/base, view/prozess, model/base, etc.
-
-**04.01.2026** - Typisiertes Tree-Model (ItsqTreeModel):
-- **Package `de.cavdar.gui.itsq.model`**: Model-Klassen (UserObjects)
-- **Package `de.cavdar.gui.itsq.tree`**: TreeNode-Klassen
-- **ItsqExplorerView**: Verwendet typisierte Nodes mit `instanceof`-Checks
-
 ## Projektstruktur
 
 ```
-TemplateGUI/
+ITSQ-Explorer/
 ├── pom.xml                     # Maven Build mit Artefakt-Integration
 ├── README.md                   # Projektueberblick
 ├── docs/
 │   ├── CLAUDE_CONTEXT.md       # Dieses Dokument
-│   └── gui.md                  # GUI-Architektur
-└── src/main/java/de/cavdar/gui/
-    ├── Main.java               # Einstiegspunkt mit main()
-    ├── design/                 # GUI Panels (mit Sub-Packages)
-    │   ├── base/               # BaseViewPanel, MainFrame, DesktopPanel
-    │   ├── prozess/            # ProzessViewPanel
-    │   ├── db/                 # DatabaseViewPanel
-    │   └── json/               # ItsqTreeViewPanel
-    ├── view/                   # Views (mit Sub-Packages)
-    │   ├── base/               # BaseView, ViewInfo
-    │   ├── prozess/            # ProzessView
-    │   ├── db/                 # DatabaseView
-    │   └── json/               # ItsqTreeView
-    ├── model/base/             # AppConfig, ConfigEntry, ConnectionInfo
-    ├── util/                   # Utilities
-    ├── exception/              # Exceptions
-    └── itsq/                   # ITSQ Explorer
-        ├── design/             # JFD-generierte Panels
-        ├── model/              # ItsqItem Model-Klassen
-        ├── tree/               # TreeNode-Klassen
-        └── view/               # View-Klassen
+│   ├── gui.md                  # GUI-Architektur
+│   ├── DOCKER_GUIDE.md         # Docker-Anleitung
+│   ├── ENVIRONMENT_LOCKING.md  # Lock-System Doku
+│   └── Maven-Artefakt-Integration.md
+├── src/main/java/de/cavdar/
+│   ├── gui/                    # GUI-Komponenten
+│   │   ├── Main.java           # Einstiegspunkt mit main()
+│   │   ├── design/base/        # BaseViewPanel, MainFrame, DesktopPanel
+│   │   ├── view/base/          # BaseView, ViewInfo
+│   │   ├── view/db/            # DatabaseView
+│   │   ├── view/itsq/          # ItsqExplorerView
+│   │   ├── model/base/         # AppConfig, ConfigEntry, ConnectionInfo
+│   │   ├── util/               # Utilities
+│   │   ├── exception/          # Exceptions
+│   │   └── itsq/               # ITSQ Explorer Subsystem (46 Klassen)
+│   │       ├── design/         # JFD-generierte Panels
+│   │       ├── model/          # ItsqItem Model-Klassen
+│   │       ├── tree/           # TreeNode-Klassen
+│   │       └── view/           # View-Klassen
+│   └── itsq/                   # ITSQ-Logik (8 Klassen)
+│       ├── TestCustomer.java
+│       ├── TestScenario.java
+│       ├── TestCrefo.java
+│       ├── AB30XMLProperties.java
+│       ├── AB30MapperUtil.java
+│       ├── TestSupportClientKonstanten.java
+│       ├── DateTimeFinderFunction.java
+│       └── TestFallExtendsArchivBestandCrefos.java
+└── src/test/java/de/cavdar/
+    ├── gui/                    # GUI-Tests
+    └── itsq/                   # ITSQ-Tests (5 Klassen)
+        ├── ITSQTestFaelleUtil.java
+        ├── TestFallExtendsArchivBestandCrefosTest.java
+        ├── CrefoConsistencyTestBase.java
+        ├── CrefoConsistencyTest.java
+        └── newstructure/
+            └── CrefoConsistencyNewTest.java
 ```
 
 ## Package-Struktur
@@ -92,22 +108,52 @@ de.cavdar.gui/
 ├── Main.java                   # Einstiegspunkt mit main()
 ├── design/
 │   ├── base/                   # BaseViewPanel, MainFrame, DesktopPanel, SettingsPanel
-│   ├── prozess/                # ProzessViewPanel
-│   ├── db/                     # DatabaseViewPanel
-│   └── json/                   # ItsqTreeViewPanel
+│   └── db/                     # DatabaseViewPanel
 ├── view/
 │   ├── base/                   # BaseView, ViewInfo
-│   ├── prozess/                # ProzessView
 │   ├── db/                     # DatabaseView
-│   └── json/                   # ItsqTreeView
+│   └── itsq/                   # ItsqExplorerView
 ├── model/base/                 # AppConfig, ConfigEntry, ConnectionInfo
 ├── util/                       # ConnectionManager, IconLoader, TestEnvironmentManager, EnvironmentLockManager
-├── exception/                  # ConfigurationException
+├── exception/                  # ConfigurationException, ViewException
 └── itsq/                       # ITSQ Explorer (JFormDesigner)
-    ├── design/                 # ItsqMainPanel, ItsqTreePanel, etc.
-    ├── model/                  # ItsqItem, ItsqRoot, ItsqCustomer, etc.
-    ├── tree/                   # ItsqTreeModel, ItsqTreeNode, etc.
-    └── view/                   # ItsqExplorerView, ItsqItemSelectable, etc.
+    ├── design/                 # ItsqMainPanel, ItsqTreePanel, ItsqEditorPanel, etc.
+    ├── model/                  # ItsqItem, ItsqRoot, ItsqCustomer, ItsqScenario, etc.
+    ├── tree/                   # ItsqTreeModel, ItsqTreeNode, ItsqRootTreeNode, etc.
+    └── view/                   # ItsqMainView, ItsqTreeView, ItsqEditorView, etc.
+
+de.cavdar.itsq/                 # ITSQ-Logik (separates Package)
+├── TestSupportClientKonstanten.java  # Konstanten (Verzeichnisse, Patterns)
+├── TestCustomer.java           # Model: Kunde mit Szenarien
+├── TestScenario.java           # Model: Szenario mit Testfaellen
+├── TestCrefo.java              # Model: Einzelner Testfall
+├── AB30XMLProperties.java      # Parsing von TestCrefos.properties
+├── AB30MapperUtil.java         # Mapping-Utilities
+├── DateTimeFinderFunction.java # Datum-Extraktion aus Dateinamen
+└── TestFallExtendsArchivBestandCrefos.java  # Hauptlogik
+```
+
+## ITSQ-Strukturen
+
+### OLD-Struktur
+```
+ITSQ/OLD/
+├── ARCHIV-BESTAND-PH1/TestCrefos.properties
+├── ARCHIV-BESTAND-PH2/TestCrefos.properties
+└── REF-EXPORTS/
+    └── c01-c05/
+        └── Relevanz_Positiv/Relevanz.properties
+```
+
+### NEW-Struktur (phasenspezifische REF-EXPORTS)
+```
+ITSQ/NEW/
+├── ARCHIV-BESTAND/
+│   ├── PHASE-1/TestCrefos.properties
+│   └── PHASE-2/TestCrefos.properties
+└── REF-EXPORTS/
+    ├── PHASE-1/c01,c02/
+    └── PHASE-2/c01-c05/
 ```
 
 ## Design-View-Trennung Pattern
@@ -119,9 +165,8 @@ de.cavdar.gui/
 
 | View | Shortcut | Icon |
 |------|----------|------|
-| ProzessView | Ctrl+2 | gear_run.png |
-| ItsqTreeView | Ctrl+I | folder_cubes.png |
 | ItsqExplorerView | Ctrl+J | folder_cubes.png |
+| DatabaseView | - | (via DB-Button) |
 
 ## Abhaengigkeiten
 
@@ -133,20 +178,61 @@ de.cavdar.gui/
 | jackson-databind | 2.17.0 | JSON Parsing |
 | junit-jupiter | 5.10.2 | Unit Tests |
 | assertj-swing | 3.17.1 | GUI Tests |
+| rsyntaxtextarea | 3.4.0 | XML-Editor |
+
+## Model-Klassen Hierarchie
+
+```
+TestCustomer (c01, c02, ...)
+    ├── customerKey
+    ├── testPhase (PHASE_1 oder PHASE_2)
+    ├── itsqRefExportsDir
+    ├── itsqAB30XmlsDir
+    └── testScenariosMap
+            │
+            ▼
+        TestScenario (Relevanz_Positiv, Relevanz_Negativ, ...)
+            ├── scenarioName
+            ├── testCustomer (Referenz)
+            ├── itsqRefExportsFile
+            └── testFallNameToTestCrefoMap
+                    │
+                    ▼
+                TestCrefo (p01, x01, n01, ...)
+                    ├── testFallName
+                    ├── itsqTestCrefoNr
+                    ├── shouldBeExported (true fuer pXX/xXX)
+                    ├── activated
+                    └── itsqRefExportXmlFile
+```
+
+## Konsistenz-Tests
+
+Die Tests pruefen, ob die Zuordnungen in `TestCrefos.properties` mit den tatsaechlichen Dateien in `REF-EXPORTS` uebereinstimmen:
+
+- **PHASE-1**: Untermenge - Crefos muessen bei MINDESTENS den definierten Kunden vorkommen
+- **PHASE-2**: Vollstaendig - Crefos muessen EXAKT bei den definierten Kunden vorkommen
+
+```bash
+# Tests ausfuehren
+mvn test -Dtest=CrefoConsistencyTest       # OLD-Struktur
+mvn test -Dtest=CrefoConsistencyNewTest    # NEW-Struktur
+```
 
 ## Prompt zum Fortsetzen
 
 ```
-Ich arbeite am Java-Projekt TemplateGUI unter E:\Projekte\ClaudeCode\TemplateGUI.
+Ich arbeite am Java-Projekt ITSQ-Explorer unter E:\Projekte\ClaudeCode\ITSQ-Explorer.
 Bitte lies die Datei docs/CLAUDE_CONTEXT.md fuer den Kontext.
 
-Aktueller Stand (07.01.2026):
-- Umgebungs-Lock-System implementiert (EnvironmentLockManager)
-- Lock verhindert, dass mehrere Instanzen dieselbe Umgebung nutzen
-- ItsqEditorView mit Dual-Modus (XML/Properties)
+Aktueller Stand (18.01.2026):
+- CrefoConsistency Tests mit Model-Klassen (OLD + NEW Struktur)
+- Trennung von GUI (de.cavdar.gui) und Logik (de.cavdar.itsq)
+- 46 Klassen im ITSQ-Subsystem, 8 ITSQ-Logik-Klassen, 5 Test-Klassen
 
 Naechste moegliche Aufgaben:
 - GUI testen und Feintuning
 - Weitere Views ueberarbeiten
 - Neue Features implementieren
+- Test-Coverage erhoehen
 ```

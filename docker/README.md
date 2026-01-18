@@ -1,6 +1,6 @@
-# StandardMDIGUI Docker Setup
+# ITSQ-Explorer Docker Setup
 
-Diese Anleitung beschreibt, wie Sie die StandardMDIGUI-Anwendung mit PostgreSQL in Docker-Containern ausführen.
+Diese Anleitung beschreibt, wie Sie die ITSQ-Explorer-Anwendung mit PostgreSQL in Docker-Containern ausfuehren.
 
 ## Voraussetzungen
 
@@ -66,13 +66,13 @@ Die PostgreSQL-Datenbank ist unter folgenden Einstellungen erreichbar:
 |-----------|------|
 | Host | `localhost` (von außen) oder `postgres` (im Container) |
 | Port | `5432` |
-| Datenbank | `standardmdi` |
+| Datenbank | `itsq-explorer` |
 | Benutzer | `postgres` |
 | Passwort | `postgres` |
 
 ### JDBC URL
 ```
-jdbc:postgresql://postgres:5432/standardmdi
+jdbc:postgresql://postgres:5432/itsq-explorer
 ```
 
 ## Struktur
@@ -129,7 +129,7 @@ docker-compose ps
 docker-compose logs postgres
 
 # Manuell verbinden
-docker exec -it standardmdi-db psql -U postgres -d standardmdi
+docker exec -it itsq-explorer-db psql -U postgres -d itsq-explorer
 ```
 
 ### Alles neu bauen
