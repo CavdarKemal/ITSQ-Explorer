@@ -198,6 +198,73 @@ ITSQ/
 | Shortcut | Funktion |
 |----------|----------|
 | Ctrl+J | ItsqExplorerView oeffnen |
+| Ctrl+Shift+M | ItsqMigrationToolView oeffnen |
+
+## ItsqMigrationToolView (OLD -> NEW Migration)
+
+Die ItsqMigrationToolView ermoeglicht die Migration von der OLD ITSQ-Struktur (ohne Phasen in REF-EXPORTS) zur NEW-Struktur (mit PHASE-1/PHASE-2 Trennung).
+
+### Features
+
+- **Vorschau-Modus**: Analysiert die OLD-Struktur und zeigt detaillierte Statistiken
+- **Phasenzuordnung**: Automatische Berechnung basierend auf ARCHIV-BESTAND Verfuegbarkeit
+- **Gefilterte Dateigenerierung**: TestCrefos.properties und Relevanz.properties werden gefiltert
+- **Fortschrittsanzeige**: Echtzeit-Progress mit Prozentanzeige und Statusmeldungen
+- **Hintergrund-Ausfuehrung**: Alle Operationen laufen in SwingWorker
+- **Backup-Option**: Optionales Backup vor Migration
+
+### Migrationslogik
+
+Fuer jeden Testfall (p0x, x0x, n0x) in Relevanz.properties:
+
+| Testfall-Typ | Bedingung fuer PHASE-1 | Bedingung fuer PHASE-2 |
+|--------------|------------------------|------------------------|
+| p0x (positiv) | ARCHIV-BESTAND-PH1/{crefo}.xml MUSS existieren | ARCHIV-BESTAND-PH2/{crefo}.xml MUSS existieren |
+| x0x (loeschsatz) | ARCHIV-BESTAND-PH1/{crefo}.xml MUSS existieren | ARCHIV-BESTAND-PH2/{crefo}.xml MUSS existieren |
+| n0x (negativ) | ARCHIV-BESTAND-PH1/{crefo}.xml DARF NICHT existieren | ARCHIV-BESTAND-PH2/{crefo}.xml DARF NICHT existieren |
+
+Ein Kunde gehoert zu einer Phase, wenn mindestens ein Testfall fuer diese Phase gueltig ist.
+
+### GUI Layout
+
+```
++---------------------------------------------------------------+
+| [Quelle: OLD Pfad] [...] [Ziel: NEW Pfad] [...] [Vorschau]    |
++---------------------------------------------------------------+
+|  +--- Vorschau ------------------------------------------------+
+|  | Kunden:    7 -> PHASE-1: 2, PHASE-2: 5                      |
+|  | Szenarien: 14 -> PHASE-1: 4, PHASE-2: 10                    |
+|  | Testfaelle: 45 -> PHASE-1: 12, PHASE-2: 33                  |
+|  +-------------------------------------------------------------+
+|  +--- Details Tabelle -----------------------------------------+
+|  | Kunde | Szenario        | Test | PH1 | PH2 | Status         |
+|  | c01   | Relevanz_Positiv| p01  | JA  | JA  | OK             |
+|  | c01   | Relevanz_Negativ| n01  | JA  | NEIN| WARNUNG        |
+|  +-------------------------------------------------------------+
++---------------------------------------------------------------+
+| [x] Backup erstellen  [ ] Ueberschreiben  [Migration starten] |
+| [================Fortschritt================] [Abbrechen]      |
++---------------------------------------------------------------+
+```
+
+### Service-Layer Architektur
+
+```
+de.cavdar.itsq.migration/
+├── model/
+│   ├── MigrationConfig.java           # Konfiguration (Quell-/Zielpfad, Optionen)
+│   ├── MigrationResult.java           # Ergebnis mit Statistiken und Fehlern
+│   ├── TestCasePhaseAssignment.java   # Phasenzuordnung pro Testfall
+│   └── MigrationProblem.java          # Problem mit Loesungsoptionen
+│
+└── service/
+    ├── OldStructureAnalyzer.java      # Liest und analysiert OLD-Struktur
+    ├── PhaseAssignmentCalculator.java # Berechnet Phasenzuordnungen
+    ├── NewStructureBuilder.java       # Erstellt NEW-Verzeichnisstruktur
+    ├── FileMigrator.java              # Kopiert Dateien mit Validierung
+    ├── MigrationService.java          # Orchestriert die Migration
+    └── MigrationValidator.java        # Validiert vor/nach Migration
+```
 
 ## ItsqEditorView (XML-Editor)
 
@@ -397,6 +464,7 @@ ItsqItemSelectable (Interface)
     ├── ItsqMainView       # Haupt-Container
     ├── ItsqTreeView       # Tree-Ansicht
     ├── ItsqViewTabView    # Tab-Container (CardLayout)
+    ├── ItsqMigrationView  # Migration OLD -> NEW
     │
     ├── Editor-Views:
     │   ├── ItsqEditorView                    # XML-Editor
@@ -412,6 +480,9 @@ ItsqItemSelectable (Interface)
     │   ├── ItsqRefExportsPhaseView
     │   ├── ItsqArchivBestandView
     │   └── ItsqArchibBestandPhaseView
+    │
+    └── Dialoge (itsq/dialog/):
+        └── MigrationProblemDialog  # Interaktiver Dialog bei Migrationsproblemen
 ```
 
 ## Neue View erstellen
@@ -498,13 +569,13 @@ public class MyViewView extends BaseView {
 
 ### Schritt 4: View registrieren
 
-In `Main.registerDefaultViews()`:
+In `Main.java`:
 
 ```java
-private void registerDefaultViews() {
-    registerView(ItsqExplorerView::new);
-    registerView(MyViewView::new);  // Neue View
-}
+MainFrame frame = new MainFrame();
+frame.registerView(ItsqExplorerView::new);
+frame.registerView(ItsqMigrationToolView::new);
+frame.registerView(MyViewView::new);  // Neue View
 ```
 
 ## Async-Task-Handling

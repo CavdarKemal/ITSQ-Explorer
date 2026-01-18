@@ -4,6 +4,7 @@ import de.cavdar.gui.design.base.MainFrame;
 import de.cavdar.gui.util.EnvironmentLockManager;
 import de.cavdar.gui.util.TimelineLogger;
 import de.cavdar.gui.view.itsq.ItsqExplorerView;
+import de.cavdar.gui.view.itsq.ItsqMigrationToolView;
 
 import javax.swing.*;
 
@@ -37,6 +38,9 @@ public class Main {
 
             // Register ITSQ-Test-Set view
             frame.registerView(ItsqExplorerView::new);
+
+            // Register ITSQ Migration Tool view
+            frame.registerView(ItsqMigrationToolView::new);
 
             frame.setVisible(true);
         });

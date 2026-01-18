@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<arc:archiv-bestand>
+	<arc:steuerungsdaten>
+		<arc:crefonummer>1234567891</arc:crefonummer>
+		<arc:clz-eigner-vc>412</arc:clz-eigner-vc>
+	</arc:steuerungsdaten>
+	<arc:firmenbeteiligte>
+		<arc:firmenbeteiligter>
+			<arc:crefonummer-beteiligter>1234567895</arc:crefonummer-beteiligter>
+		</arc:firmenbeteiligter>
+	</arc:firmenbeteiligte>
+</arc:archiv-bestand>

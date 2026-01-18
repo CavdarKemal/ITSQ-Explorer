@@ -6,9 +6,11 @@ Abgespeckte Version von TemplateGUI mit Fokus auf ITSQ-Test-Set Verwaltung.
 
 - **MainFrame**: Hauptfenster mit Config-Toolbar
 - **ItsqExplorerView**: ITSQ-Test-Set Verwaltung (Kunden, Szenarien, Testfaelle)
+- **ItsqMigrationToolView**: Migration von OLD nach NEW ITSQ-Struktur (Ctrl+Shift+M)
 - **DatabaseView**: SQL-Editor mit Ergebnistabelle (via DB-Button)
 - **ITSQ-Subsystem**: Komplettes Tree-basiertes Navigations- und Bearbeitungssystem (46 Klassen)
 - **ITSQ-Logik**: Model-Klassen fuer Testdaten-Verarbeitung (8 Klassen)
+- **Migration-Service**: Automatische Migration von OLD nach NEW mit Phasenzuordnung (10 Klassen)
 - **Konsistenz-Tests**: Tests fuer OLD und NEW ITSQ-Strukturen
 
 ## Entfernte Komponenten (vs. TemplateGUI)
@@ -57,13 +59,15 @@ ITSQ-Explorer/
 │   │   ├── model/base/         # AppConfig, ConnectionInfo
 │   │   ├── util/               # Utilities
 │   │   └── exception/          # Exceptions
-│   └── itsq/                   # ITSQ-Logik (8 Klassen)
+│   └── itsq/                   # ITSQ-Logik (8 Klassen + 10 Migration)
 │       ├── TestCustomer.java   # Kunde mit Szenarien
 │       ├── TestScenario.java   # Szenario mit Testfaellen
 │       ├── TestCrefo.java      # Einzelner Testfall
 │       ├── AB30XMLProperties.java  # Properties-Parsing
 │       ├── AB30MapperUtil.java # Mapping-Utilities
-│       └── ...
+│       └── migration/          # Migration OLD -> NEW
+│           ├── model/          # MigrationConfig, MigrationResult, etc.
+│           └── service/        # MigrationService, OldStructureAnalyzer, etc.
 └── src/test/java/de/cavdar/
     ├── gui/                    # GUI-Tests
     └── itsq/                   # ITSQ-Tests (5 Klassen)
@@ -80,11 +84,12 @@ ITSQ-Explorer/
 | `de.cavdar.gui.design.base` | MainFrame, BaseViewPanel, DesktopPanel | 5 |
 | `de.cavdar.gui.view.base` | BaseView, ViewInfo | 2 |
 | `de.cavdar.gui.view.db` | DatabaseView | 1 |
-| `de.cavdar.gui.view.itsq` | ItsqExplorerView | 1 |
-| `de.cavdar.gui.itsq.*` | ITSQ-Subsystem (design, view, tree, model) | 46 |
+| `de.cavdar.gui.view.itsq` | ItsqExplorerView, ItsqMigrationToolView | 2 |
+| `de.cavdar.gui.itsq.*` | ITSQ-Subsystem (design, view, tree, model, dialog) | 49 |
 | `de.cavdar.gui.model.base` | AppConfig, ConfigEntry, ConnectionInfo | 3 |
 | `de.cavdar.gui.util` | Utilities (ConnectionManager, IconLoader, etc.) | 5 |
 | `de.cavdar.itsq` | ITSQ-Logik und Model-Klassen | 8 |
+| `de.cavdar.itsq.migration.*` | Migration OLD->NEW (model, service) | 10 |
 
 ## ITSQ-Struktur
 

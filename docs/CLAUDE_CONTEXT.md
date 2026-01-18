@@ -22,6 +22,18 @@
 
 ## Letzte Aenderungen
 
+**18.01.2026** - ITSQ Migration Tool:
+- **ItsqMigrationToolView**: Neue View fuer Migration OLD -> NEW (Ctrl+Shift+M)
+- **ItsqMigrationPanel**: GUI-Panel mit Pfadauswahl, Vorschau und Fortschrittsanzeige
+- **ItsqMigrationView**: View-Logik mit SwingWorker-Integration
+- **MigrationProblemDialog**: Interaktiver Dialog bei Problemen
+- **Migration Service Layer** (10 Klassen):
+  - `MigrationConfig`, `MigrationResult`, `TestCasePhaseAssignment`, `MigrationProblem` (model)
+  - `OldStructureAnalyzer`, `PhaseAssignmentCalculator`, `NewStructureBuilder` (service)
+  - `FileMigrator`, `MigrationService`, `MigrationValidator` (service)
+- Automatische Phasenzuordnung basierend auf ARCHIV-BESTAND Verfuegbarkeit
+- Gefilterte Generierung von TestCrefos.properties und Relevanz.properties
+
 **18.01.2026** - Refactoring ITSQ-Konsistenztests:
 - **ITSQConsistencyTestBase**: Neue abstrakte Basisklasse mit Template-Pattern
 - **OldITSQConsistencyTest**: Tests fuer OLD ITSQ-Struktur (c01-c06)
@@ -78,12 +90,13 @@ ITSQ-Explorer/
 │   │   ├── model/base/         # AppConfig, ConfigEntry, ConnectionInfo
 │   │   ├── util/               # Utilities
 │   │   ├── exception/          # Exceptions
-│   │   └── itsq/               # ITSQ Explorer Subsystem (46 Klassen)
-│   │       ├── design/         # JFD-generierte Panels
+│   │   └── itsq/               # ITSQ Explorer Subsystem (49 Klassen)
+│   │       ├── design/         # JFD-generierte Panels (inkl. ItsqMigrationPanel)
 │   │       ├── model/          # ItsqItem Model-Klassen
 │   │       ├── tree/           # TreeNode-Klassen
-│   │       └── view/           # View-Klassen
-│   └── itsq/                   # ITSQ-Logik (8 Klassen)
+│   │       ├── view/           # View-Klassen (inkl. ItsqMigrationView)
+│   │       └── dialog/         # Dialoge (MigrationProblemDialog)
+│   └── itsq/                   # ITSQ-Logik (8 Klassen + 10 Migration)
 │       ├── TestCustomer.java
 │       ├── TestScenario.java
 │       ├── TestCrefo.java
@@ -118,10 +131,11 @@ de.cavdar.gui/
 ├── util/                       # ConnectionManager, IconLoader, TestEnvironmentManager, EnvironmentLockManager
 ├── exception/                  # ConfigurationException, ViewException
 └── itsq/                       # ITSQ Explorer (JFormDesigner)
-    ├── design/                 # ItsqMainPanel, ItsqTreePanel, ItsqEditorPanel, etc.
+    ├── design/                 # ItsqMainPanel, ItsqTreePanel, ItsqEditorPanel, ItsqMigrationPanel, etc.
     ├── model/                  # ItsqItem, ItsqRoot, ItsqCustomer, ItsqScenario, etc.
     ├── tree/                   # ItsqTreeModel, ItsqTreeNode, ItsqRootTreeNode, etc.
-    └── view/                   # ItsqMainView, ItsqTreeView, ItsqEditorView, etc.
+    ├── view/                   # ItsqMainView, ItsqTreeView, ItsqEditorView, ItsqMigrationView, etc.
+    └── dialog/                 # MigrationProblemDialog
 
 de.cavdar.itsq/                 # ITSQ-Logik (separates Package)
 ├── TestSupportClientKonstanten.java  # Konstanten (Verzeichnisse, Patterns)
@@ -131,7 +145,20 @@ de.cavdar.itsq/                 # ITSQ-Logik (separates Package)
 ├── AB30XMLProperties.java      # Parsing von TestCrefos.properties
 ├── AB30MapperUtil.java         # Mapping-Utilities
 ├── DateTimeFinderFunction.java # Datum-Extraktion aus Dateinamen
-└── TestFallExtendsArchivBestandCrefos.java  # Hauptlogik
+├── TestFallExtendsArchivBestandCrefos.java  # Hauptlogik
+└── migration/                  # Migration OLD -> NEW
+    ├── model/
+    │   ├── MigrationConfig.java           # Konfiguration
+    │   ├── MigrationResult.java           # Ergebnis mit Statistiken
+    │   ├── TestCasePhaseAssignment.java   # Phasenzuordnung
+    │   └── MigrationProblem.java          # Problemdarstellung
+    └── service/
+        ├── OldStructureAnalyzer.java      # Analysiert OLD-Struktur
+        ├── PhaseAssignmentCalculator.java # Berechnet Phasen
+        ├── NewStructureBuilder.java       # Erstellt NEW-Verzeichnisse
+        ├── FileMigrator.java              # Kopiert Dateien
+        ├── MigrationService.java          # Orchestrierung
+        └── MigrationValidator.java        # Validierung
 ```
 
 ## ITSQ-Strukturen
@@ -173,6 +200,7 @@ ITSQ/NEW/
 | View | Shortcut | Icon |
 |------|----------|------|
 | ItsqExplorerView | Ctrl+J | folder_cubes.png |
+| ItsqMigrationToolView | Ctrl+Shift+M | arrow_right.png |
 | DatabaseView | - | (via DB-Button) |
 
 ## Abhaengigkeiten
@@ -233,14 +261,17 @@ Ich arbeite am Java-Projekt ITSQ-Explorer unter E:\Projekte\ClaudeCode\ITSQ-Expl
 Bitte lies die Datei docs/CLAUDE_CONTEXT.md fuer den Kontext.
 
 Aktueller Stand (18.01.2026):
+- ITSQ Migration Tool (OLD -> NEW) vollstaendig implementiert
+- ItsqMigrationToolView mit Vorschau, Phasenzuordnung, Fortschrittsanzeige
+- Migration Service Layer: 10 Klassen (model + service)
 - ITSQConsistencyTestBase mit Template-Pattern (abstrakte Basisklasse)
 - OldITSQConsistencyTest (c01-c06), NewITSQConsistencyTest (phasenspezifisch)
 - Trennung von GUI (de.cavdar.gui) und Logik (de.cavdar.itsq)
-- 46 Klassen im ITSQ-Subsystem, 8 ITSQ-Logik-Klassen, 5 Test-Klassen
+- 49 Klassen im ITSQ-Subsystem, 18 ITSQ-Logik-Klassen, 5 Test-Klassen
 
 Naechste moegliche Aufgaben:
-- GUI testen und Feintuning
-- Weitere Views ueberarbeiten
-- Neue Features implementieren
+- Migration Tool testen und Feintuning
+- Unit-Tests fuer Migration Service Layer
+- Weitere Features implementieren
 - Test-Coverage erhoehen
 ```
