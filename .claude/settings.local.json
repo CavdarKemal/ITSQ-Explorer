@@ -17,7 +17,12 @@
       "mcp__filesystem__create_directory",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nTest: CrefoConsistencyTest fuer ITSQ OLD Testdaten\n\nNeuer JUnit 5 Test zur Pruefung der Konsistenz zwischen:\n- TestCrefos.properties \\(PHASE-1 und PHASE-2\\)\n- Relevanz_Positiv/Relevanz.properties \\(REF-EXPORTS\\)\n\nFeatures:\n- PHASE-1 Tests: Prueft Untermenge-Bedingung \\(mindestens definierte Kunden\\)\n- PHASE-2 Tests: Prueft exakte Uebereinstimmung\n- Validierung: PHASE-1 muss Untermenge von PHASE-2 sein\n- Konsistenz-Report zur Uebersicht\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(dir:*)",
+      "Bash(git mv:*)",
+      "Bash(git rm:*)",
+      "Bash(git reset:*)",
+      "mcp__filesystem__read_text_file"
     ]
   },
   "enableAllProjectMcpServers": true,

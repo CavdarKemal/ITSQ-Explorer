@@ -7,17 +7,16 @@ public class TestCrefo {
     private String testFallInfo;
     private Long itsqTestCrefoNr;
     private File itsqRexExportXmlFile;
-    private File refExportFile;
     private boolean shouldBeExported;
     private boolean activated = true;
     private boolean exported = false;
 
-    public TestCrefo(String testFallName, Long itsqTestCrefoNr, String testFallInfo, boolean shouldBeExported, File refExportFile) {
+    public TestCrefo(String testFallName, Long itsqTestCrefoNr, String testFallInfo, boolean shouldBeExported, File itsqRexExportXmlFile) {
         this.testFallName = testFallName;
         this.itsqTestCrefoNr = itsqTestCrefoNr;
         this.testFallInfo = testFallInfo;
         this.shouldBeExported = shouldBeExported;
-        this.refExportFile = refExportFile;
+        this.itsqRexExportXmlFile = itsqRexExportXmlFile;
     }
 
     public TestCrefo(TestCrefo theClone) {
@@ -28,7 +27,6 @@ public class TestCrefo {
         setActivated(theClone.isActivated());
         setExported(theClone.isExported());
         setShouldBeExported(theClone.isShouldBeExported());
-        setRefExportFile(theClone.getRefExportFile());
     }
 
     public Long getItsqTestCrefoNr() {
@@ -37,14 +35,6 @@ public class TestCrefo {
 
     public void setItsqTestCrefoNr(Long itsqTestCrefoNr) {
         this.itsqTestCrefoNr = itsqTestCrefoNr;
-    }
-
-    public File getRefExportFile() {
-        return refExportFile;
-    }
-
-    public void setRefExportFile(File refExportFile) {
-        this.refExportFile = refExportFile;
     }
 
     public boolean isActivated() {
@@ -103,9 +93,6 @@ public class TestCrefo {
     public StringBuilder dump(String prefix) {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(prefix + testFallName + "\t" + itsqTestCrefoNr);
-        if (refExportFile != null) {
-            stringBuilder.append("\t" + refExportFile.getName());
-        }
         stringBuilder.append("\t");
         if (itsqRexExportXmlFile != null) {
             stringBuilder.append(itsqRexExportXmlFile.getName());
