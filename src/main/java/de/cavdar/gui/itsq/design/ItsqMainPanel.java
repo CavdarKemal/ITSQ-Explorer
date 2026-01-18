@@ -62,9 +62,9 @@ public class ItsqMainPanel extends JPanel {
         {
             panelControls.setBorder(new SoftBevelBorder(SoftBevelBorder.LOWERED));
             panelControls.setLayout(new GridBagLayout());
-            ((GridBagLayout)panelControls.getLayout()).columnWidths = new int[] {0, 0, 0, 0};
+            ((GridBagLayout)panelControls.getLayout()).columnWidths = new int[] {0, 0, 0, 0, 0, 0, 0, 0};
             ((GridBagLayout)panelControls.getLayout()).rowHeights = new int[] {0, 0};
-            ((GridBagLayout)panelControls.getLayout()).columnWeights = new double[] {0.0, 1.0, 0.0, 1.0E-4};
+            ((GridBagLayout)panelControls.getLayout()).columnWeights = new double[] {0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0E-4};
             ((GridBagLayout)panelControls.getLayout()).rowWeights = new double[] {1.0, 1.0E-4};
 
             //---- labelTestSet ----
@@ -72,14 +72,14 @@ public class ItsqMainPanel extends JPanel {
             panelControls.add(labelTestSet, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(2, 2, 2, 4), 0, 0));
-            panelControls.add(comboBoxTestSet, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
+            panelControls.add(comboBoxTestSet, new GridBagConstraints(1, 0, 5, 1, 0.0, 0.0,
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(2, 2, 2, 4), 0, 0));
 
             //---- buttonLoad ----
             buttonLoad.setText("Load");
             buttonLoad.setIcon(new ImageIcon(getClass().getResource("/icons/folder_gear.png")));
-            panelControls.add(buttonLoad, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0,
+            panelControls.add(buttonLoad, new GridBagConstraints(6, 0, 1, 1, 0.0, 0.0,
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(2, 2, 2, 2), 0, 0));
         }

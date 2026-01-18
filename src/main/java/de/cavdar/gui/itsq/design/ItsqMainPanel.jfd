@@ -14,7 +14,7 @@ new FormModel {
 			}
 			add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class java.awt.GridBagLayout ) {
 				"$columnSpecs": "0, 0, 0, 0:1.0, 0, 0:1.0, 0"
-				"$rowSpecs": "0:1.0, 0"
+				"$rowSpecs": "0:1.0"
 				"$hGap": 2
 				"$vGap": 2
 				"$alignTop": true
@@ -32,7 +32,7 @@ new FormModel {
 						"JavaCodeGenerator.variableGetter": true
 					}
 				}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
-					"insets": &Insets0 new java.awt.Insets( 2, 2, 2, 2 )
+					"insets": new java.awt.Insets( 2, 2, 2, 2 )
 				} )
 				add( new FormComponent( "javax.swing.JComboBox" ) {
 					name: "comboBoxTestSet"
@@ -42,7 +42,7 @@ new FormModel {
 				}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
 					"gridwidth": 5
 					"gridx": 1
-					"insets": &Insets1 new java.awt.Insets( 2, 2, 2, 2 )
+					"insets": new java.awt.Insets( 2, 2, 2, 2 )
 				} )
 				add( new FormComponent( "javax.swing.JButton" ) {
 					name: "buttonLoad"
@@ -53,92 +53,6 @@ new FormModel {
 					}
 				}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
 					"gridx": 6
-					"insets": new java.awt.Insets( 2, 2, 2, 2 )
-				} )
-				add( new FormComponent( "javax.swing.JLabel" ) {
-					name: "labelTestSetSource"
-					"text": "Source:"
-					auxiliary() {
-						"JavaCodeGenerator.variableGetter": true
-					}
-				}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
-					"insets": #Insets0
-					"gridy": 1
-				} )
-				add( new FormComponent( "javax.swing.JComboBox" ) {
-					name: "comboBoxTestSetSource"
-					"model": new javax.swing.DefaultComboBoxModel {
-						selectedItem: "Alle"
-						addElement( "Alle" )
-						addElement( "ARCHIV-BESTAND" )
-						addElement( "REF-EXPORTS" )
-					}
-					auxiliary() {
-						"JavaCodeGenerator.variableGetter": true
-					}
-				}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
-					"gridx": 1
-					"insets": #Insets1
-					"gridy": 1
-				} )
-				add( new FormComponent( "javax.swing.JLabel" ) {
-					name: "labelPhase"
-					"text": "Phase:"
-					auxiliary() {
-						"JavaCodeGenerator.variableGetter": true
-					}
-				}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
-					"insets": #Insets0
-					"gridy": 1
-					"gridx": 2
-				} )
-				add( new FormComponent( "javax.swing.JComboBox" ) {
-					name: "comboBoxPhase"
-					"model": new javax.swing.DefaultComboBoxModel {
-						selectedItem: "Alle"
-						addElement( "Alle" )
-						addElement( "PHASE-1" )
-						addElement( "PHASE-2" )
-					}
-					auxiliary() {
-						"JavaCodeGenerator.variableGetter": true
-					}
-				}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
-					"gridx": 3
-					"insets": #Insets1
-					"gridy": 1
-				} )
-				add( new FormComponent( "javax.swing.JLabel" ) {
-					name: "labelFilter"
-					"text": "Filter:"
-					auxiliary() {
-						"JavaCodeGenerator.variableGetter": true
-					}
-				}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
-					"gridy": 1
-					"insets": new java.awt.Insets( 2, 2, 2, 2 )
-					"gridx": 4
-				} )
-				add( new FormComponent( "javax.swing.JComboBox" ) {
-					name: "comboBoxFilter"
-					"editable": true
-					auxiliary() {
-						"JavaCodeGenerator.variableGetter": true
-					}
-				}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
-					"gridx": 5
-					"gridy": 1
-					"insets": new java.awt.Insets( 2, 2, 2, 2 )
-				} )
-				add( new FormComponent( "javax.swing.JCheckBox" ) {
-					name: "checkBoxActiveOnly"
-					"text": "Active Only"
-					auxiliary() {
-						"JavaCodeGenerator.variableGetter": true
-					}
-				}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
-					"gridx": 6
-					"gridy": 1
 					"insets": new java.awt.Insets( 2, 2, 2, 2 )
 				} )
 			}, new FormLayoutConstraints( class java.lang.String ) {
