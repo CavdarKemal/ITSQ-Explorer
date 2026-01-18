@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Testdaten liegen unter: src/test/resources/ITSQ/NEW/
  */
 @DisplayName("ITSQ Konsistenz Tests (NEW)")
-public class ITSQConsistencyTest {
+public class NewITSQConsistencyTest {
 
     private static final String BASE_PATH = "/ITSQ/NEW";
     private static final String ARCHIV_BESTAND = BASE_PATH + "/ARCHIV-BESTAND";
