@@ -46,19 +46,15 @@ public class ItsqTreeView extends ItsqTreePanel {
     }
 
     /**
-     * Reloads the tree from the given directory with filter settings.
+     * Reloads the tree from the given directory.
      *
-     * @param itsqDir      the ITSQ directory to scan
-     * @param filterText   filter text for file/directory names
-     * @param activeOnly   if true, only show active items
-     * @param sourceFilter source filter (ARCHIV-BESTAND, REF-EXPORTS, or "Alle")
-     * @param phaseFilter  phase filter (PHASE-1, PHASE-2, or "Alle")
+     * @param itsqDir the ITSQ directory to scan
      */
-    public void reload(File itsqDir, String filterText, boolean activeOnly,
-                       String sourceFilter, String phaseFilter) {
-        treeModel.reload(itsqDir, filterText, activeOnly, sourceFilter, phaseFilter);
+    public void reload(File itsqDir) {
+        treeModel.reload(itsqDir);
         expandToLevel(2);
-        TimelineLogger.debug(ItsqTreeView.class, "Tree reloaded: {} files, {} dirs", treeModel.getTotalFiles(), treeModel.getTotalDirs());
+        TimelineLogger.debug(ItsqTreeView.class, "Tree reloaded: {} files, {} dirs",
+                treeModel.getTotalFiles(), treeModel.getTotalDirs());
     }
 
     /**

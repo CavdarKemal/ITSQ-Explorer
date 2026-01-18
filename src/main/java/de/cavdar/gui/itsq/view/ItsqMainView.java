@@ -56,20 +56,6 @@ public class ItsqMainView extends ItsqMainPanel {
         // ComboBox selection change -> reload tree
         getComboBoxTestSet().addActionListener(e -> onTestSetSelectionChanged());
 
-        // Filter ComboBox -> apply filter
-        getComboBoxFilter().addActionListener(e -> applyFilter());
-        JTextField filterEditor = (JTextField) getComboBoxFilter().getEditor().getEditorComponent();
-        filterEditor.addActionListener(e -> applyFilter());
-
-        // Active Only checkbox -> apply filter
-        getCheckBoxActiveOnly().addActionListener(e -> applyFilter());
-
-        // Source filter -> apply filter
-        getComboBoxTestSetSource().addActionListener(e -> applyFilter());
-
-        // Phase filter -> apply filter
-        getComboBoxPhase().addActionListener(e -> applyFilter());
-
         // Tree selection callback -> delegate to ViewTabView
         getPanelItsqTree().setSelectionCallback(node -> getPanelItsqView().showCardForNode(node));
     }
@@ -176,35 +162,6 @@ public class ItsqMainView extends ItsqMainPanel {
         }
     }
 
-    // ===== Filter =====
-
-    private String getFilterText() {
-        Object selected = getComboBoxFilter().getSelectedItem();
-        return selected != null ? selected.toString().trim() : "";
-    }
-
-    private void applyFilter() {
-        if (updatingComboBox || !initialLoadDone) return;
-        loadItsqDirectory();
-    }
-
-    @SuppressWarnings("unchecked")
-    private void addToFilterHistory(String filterText) {
-        if (filterText == null || filterText.isEmpty()) return;
-
-        JComboBox<String> filterCombo = getComboBoxFilter();
-        DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>) filterCombo.getModel();
-
-        for (int i = 0; i < model.getSize(); i++) {
-            if (filterText.equals(model.getElementAt(i))) return;
-        }
-
-        model.insertElementAt(filterText, 0);
-        if (model.getSize() > 20) {
-            model.removeElementAt(model.getSize() - 1);
-        }
-    }
-
     // ===== Load Directory =====
 
     private void loadItsqDirectory() {
@@ -218,14 +175,8 @@ public class ItsqMainView extends ItsqMainPanel {
             return;
         }
 
-        // Collect filter settings
-        String filterText = getFilterText();
-        boolean activeOnly = getCheckBoxActiveOnly().isSelected();
-        String sourceFilter = (String) getComboBoxTestSetSource().getSelectedItem();
-        String phaseFilter = (String) getComboBoxPhase().getSelectedItem();
-
-        // Delegate to TreeView
-        getPanelItsqTree().reload(itsqDir, filterText, activeOnly, sourceFilter, phaseFilter);
+        // Delegate to TreeView (no filters)
+        getPanelItsqTree().reload(itsqDir);
 
         // Show root card
         getPanelItsqView().showRootCard();
@@ -234,11 +185,9 @@ public class ItsqMainView extends ItsqMainPanel {
         String path = itsqDir.getAbsolutePath();
         addToTestSetHistory(path);
         lastValidSelection = path;
-        addToFilterHistory(filterText);
 
-        TimelineLogger.info(ItsqMainView.class, "Loaded ITSQ: {} ({} files, {} dirs, filter: '{}', source: '{}', phase: '{}')",
-                path, getPanelItsqTree().getTotalFiles(), getPanelItsqTree().getTotalDirs(),
-                filterText, sourceFilter, phaseFilter);
+        TimelineLogger.info(ItsqMainView.class, "Loaded ITSQ: {} ({} files, {} dirs)",
+                path, getPanelItsqTree().getTotalFiles(), getPanelItsqTree().getTotalDirs());
     }
 
     private File resolveItsqPath() {
