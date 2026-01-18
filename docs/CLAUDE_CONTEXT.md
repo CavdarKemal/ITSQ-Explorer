@@ -22,15 +22,17 @@
 
 ## Letzte Aenderungen
 
-**18.01.2026** - CrefoConsistency Tests mit Model-Klassen:
-- **CrefoConsistencyTestBase**: Basisklasse mit gemeinsamer Funktionalitaet
-- **CrefoConsistencyTest**: Tests fuer OLD ITSQ-Struktur
-- **CrefoConsistencyNewTest**: Tests fuer NEW ITSQ-Struktur (unter newstructure Package)
+**18.01.2026** - Refactoring ITSQ-Konsistenztests:
+- **ITSQConsistencyTestBase**: Neue abstrakte Basisklasse mit Template-Pattern
+- **OldITSQConsistencyTest**: Tests fuer OLD ITSQ-Struktur (c01-c06)
+- **NewITSQConsistencyTest**: Tests fuer NEW ITSQ-Struktur (phasenspezifisch)
+- Alte Klassen entfernt (CrefoConsistencyTestBase, CrefoConsistencyTest, CrefoConsistencyNewTest)
+- Neuer Kunde c06 mit Testdaten hinzugefuegt
 - Verwendet Model-Klassen (TestCustomer, TestScenario, TestCrefo)
 - Unterstuetzt Classpath-Ressourcen fuer Testdaten
 
 **17.01.2026** - Neue Model-Klassen fuer ITSQ-Daten:
-- **TestCustomer**: Repraesentiert einen Testkunden (c01-c05)
+- **TestCustomer**: Repraesentiert einen Testkunden (c01-c06)
 - **TestScenario**: Repraesentiert ein Szenario (Relevanz_Positiv, etc.)
 - **TestCrefo**: Repraesentiert einen Testfall (pXX, xXX, nXX)
 - **AB30XMLProperties**: Parsing von TestCrefos.properties
@@ -95,10 +97,9 @@ ITSQ-Explorer/
     └── itsq/                   # ITSQ-Tests (5 Klassen)
         ├── ITSQTestFaelleUtil.java
         ├── TestFallExtendsArchivBestandCrefosTest.java
-        ├── CrefoConsistencyTestBase.java
-        ├── CrefoConsistencyTest.java
-        └── newstructure/
-            └── CrefoConsistencyNewTest.java
+        ├── ITSQConsistencyTestBase.java  # Abstrakte Basisklasse
+        ├── OldITSQConsistencyTest.java   # Tests fuer OLD-Struktur (c01-c06)
+        └── NewITSQConsistencyTest.java   # Tests fuer NEW-Struktur
 ```
 
 ## Package-Struktur
@@ -138,11 +139,17 @@ de.cavdar.itsq/                 # ITSQ-Logik (separates Package)
 ### OLD-Struktur
 ```
 ITSQ/OLD/
-├── ARCHIV-BESTAND-PH1/TestCrefos.properties
-├── ARCHIV-BESTAND-PH2/TestCrefos.properties
+├── ARCHIV-BESTAND-PH1/
+│   ├── TestCrefos.properties
+│   └── {crefo}.xml
+├── ARCHIV-BESTAND-PH2/
+│   ├── TestCrefos.properties
+│   └── {crefo}.xml
 └── REF-EXPORTS/
-    └── c01-c05/
-        └── Relevanz_Positiv/Relevanz.properties
+    └── c01-c06/
+        └── Relevanz_Positiv/
+            ├── Relevanz.properties
+            └── {testfall}_{stammsatz|loeschsatz}_{crefo}.xml
 ```
 
 ### NEW-Struktur (phasenspezifische REF-EXPORTS)
@@ -183,7 +190,7 @@ ITSQ/NEW/
 ## Model-Klassen Hierarchie
 
 ```
-TestCustomer (c01, c02, ...)
+TestCustomer (c01, c02, ..., c06)
     ├── customerKey
     ├── testPhase (PHASE_1 oder PHASE_2)
     ├── itsqRefExportsDir
@@ -215,8 +222,8 @@ Die Tests pruefen, ob die Zuordnungen in `TestCrefos.properties` mit den tatsaec
 
 ```bash
 # Tests ausfuehren
-mvn test -Dtest=CrefoConsistencyTest       # OLD-Struktur
-mvn test -Dtest=CrefoConsistencyNewTest    # NEW-Struktur
+mvn test -Dtest=OldITSQConsistencyTest     # OLD-Struktur (c01-c06)
+mvn test -Dtest=NewITSQConsistencyTest     # NEW-Struktur (phasenspezifisch)
 ```
 
 ## Prompt zum Fortsetzen
@@ -226,7 +233,8 @@ Ich arbeite am Java-Projekt ITSQ-Explorer unter E:\Projekte\ClaudeCode\ITSQ-Expl
 Bitte lies die Datei docs/CLAUDE_CONTEXT.md fuer den Kontext.
 
 Aktueller Stand (18.01.2026):
-- CrefoConsistency Tests mit Model-Klassen (OLD + NEW Struktur)
+- ITSQConsistencyTestBase mit Template-Pattern (abstrakte Basisklasse)
+- OldITSQConsistencyTest (c01-c06), NewITSQConsistencyTest (phasenspezifisch)
 - Trennung von GUI (de.cavdar.gui) und Logik (de.cavdar.itsq)
 - 46 Klassen im ITSQ-Subsystem, 8 ITSQ-Logik-Klassen, 5 Test-Klassen
 
