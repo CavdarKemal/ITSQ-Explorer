@@ -1,0 +1,218 @@
+JFDML JFormDesigner: "8.3" encoding: "UTF-8"
+
+new FormModel {
+	"i18n.autoExternalize": true
+	"i18n.bundlePackage": "de.cavdar.gui.design"
+	"i18n.bundleName": "form"
+	"i18n.keyPrefix": "ItsqRefExportsPhasePanel"
+	contentType: "form/swing"
+	root: new FormRoot {
+		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class java.awt.BorderLayout ) ) {
+			name: "this"
+			add( new FormContainer( "javax.swing.JToolBar", new FormLayoutManager( class javax.swing.JToolBar ) ) {
+				name: "toolBarControls"
+				"rollover": true
+				auxiliary() {
+					"JavaCodeGenerator.variableGetter": true
+				}
+				add( new FormComponent( "javax.swing.JButton" ) {
+					name: "buttonNew"
+					"text": "Neu"
+					"icon": new com.jformdesigner.model.SwingIcon( 0, "/icons/add.png" )
+					auxiliary() {
+						"JavaCodeGenerator.variableGetter": true
+					}
+				} )
+				add( new FormComponent( "javax.swing.JButton" ) {
+					name: "buttonEdit"
+					"text": "Ändern"
+					"icon": new com.jformdesigner.model.SwingIcon( 0, "/icons/gear_run.png" )
+					auxiliary() {
+						"JavaCodeGenerator.variableGetter": true
+					}
+				} )
+				add( new FormComponent( "javax.swing.JButton" ) {
+					name: "buttonDelete"
+					"text": "Löschen"
+					"icon": new com.jformdesigner.model.SwingIcon( 0, "/icons/cancel.png" )
+					auxiliary() {
+						"JavaCodeGenerator.variableGetter": true
+					}
+				} )
+				add( new FormComponent( "javax.swing.JToolBar$Separator" ) {
+					name: "separator3"
+				} )
+				add( new FormComponent( "javax.swing.JLabel" ) {
+					name: "labelFilter"
+					"text": "Filter:"
+					auxiliary() {
+						"JavaCodeGenerator.variableGetter": true
+					}
+				} )
+				add( new FormComponent( "javax.swing.JToolBar$Separator" ) {
+					name: "separator1"
+					auxiliary() {
+						"JavaCodeGenerator.variableGetter": true
+					}
+				} )
+				add( new FormComponent( "javax.swing.JComboBox" ) {
+					name: "comboBoxFilter"
+					auxiliary() {
+						"JavaCodeGenerator.variableGetter": true
+					}
+				} )
+				add( new FormComponent( "javax.swing.JToolBar$Separator" ) {
+					name: "separator2"
+				} )
+				add( new FormComponent( "javax.swing.JButton" ) {
+					name: "buttonSave"
+					"text": "Speichern"
+					"icon": new com.jformdesigner.model.SwingIcon( 0, "/icons/save.png" )
+					auxiliary() {
+						"JavaCodeGenerator.variableGetter": true
+					}
+				} )
+			}, new FormLayoutConstraints( class java.lang.String ) {
+				"value": "North"
+			} )
+			add( new FormContainer( "javax.swing.JSplitPane", new FormLayoutManager( class javax.swing.JSplitPane ) ) {
+				name: "splitPane"
+				"orientation": 0
+				"resizeWeight": 1.0
+				auxiliary() {
+					"JavaCodeGenerator.variableGetter": true
+				}
+				add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class java.awt.BorderLayout ) ) {
+					name: "panelPropertiesTable"
+					"border": new javax.swing.border.EtchedBorder( 1, null, null )
+					auxiliary() {
+						"JavaCodeGenerator.variableGetter": true
+					}
+					add( new FormContainer( "javax.swing.JScrollPane", new FormLayoutManager( class javax.swing.JScrollPane ) ) {
+						name: "scrollPanePropertiesTable"
+						auxiliary() {
+							"JavaCodeGenerator.variableGetter": true
+						}
+						add( new FormComponent( "javax.swing.JTable" ) {
+							name: "tableProperties"
+							auxiliary() {
+								"JavaCodeGenerator.variableGetter": true
+							}
+						} )
+					}, new FormLayoutConstraints( class java.lang.String ) {
+						"value": "Center"
+					} )
+				}, new FormLayoutConstraints( class java.lang.String ) {
+					"value": "left"
+				} )
+				add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class java.awt.GridBagLayout ) {
+					"$columnSpecs": "0, 335:1.0, 99, 0"
+					"$rowSpecs": "0, 0, 0"
+					"$hGap": 5
+					"$vGap": 5
+					"$alignLeft": true
+					"$alignTop": true
+				} ) {
+					name: "panelControls"
+					"border": new javax.swing.border.SoftBevelBorder( 1, null, null, null, null )
+					auxiliary() {
+						"JavaCodeGenerator.variableGetter": true
+					}
+					add( new FormComponent( "javax.swing.JLabel" ) {
+						name: "labelRefExportFile"
+						"text": "Ref-Export-Datei:"
+						auxiliary() {
+							"JavaCodeGenerator.variableGetter": true
+						}
+					}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
+						"insets": new java.awt.Insets( 2, 2, 2, 2 )
+					} )
+					add( new FormComponent( "javax.swing.JTextField" ) {
+						name: "textFieldRefExportFile"
+						"editable": false
+						auxiliary() {
+							"JavaCodeGenerator.variableGetter": true
+						}
+					}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
+						"gridx": 1
+						"insets": new java.awt.Insets( 2, 2, 2, 2 )
+					} )
+					add( new FormComponent( "javax.swing.JButton" ) {
+						name: "buttonLocateRefExportFile"
+						"text": "Selektieren..."
+						"icon": &SwingIcon0 new com.jformdesigner.model.SwingIcon( 0, "/icons/folder_into.png" )
+						auxiliary() {
+							"JavaCodeGenerator.variableGetter": true
+						}
+					}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
+						"gridx": 2
+						"insets": new java.awt.Insets( 2, 2, 2, 2 )
+					} )
+					add( new FormComponent( "javax.swing.JButton" ) {
+						name: "buttonDownloadRefExportFile"
+						"text": "Downloaden..."
+						"icon": &SwingIcon1 new com.jformdesigner.model.SwingIcon( 0, "/icons/folder_network.png" )
+						auxiliary() {
+							"JavaCodeGenerator.variableGetter": true
+						}
+					}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
+						"gridx": 3
+						"insets": new java.awt.Insets( 2, 2, 2, 2 )
+					} )
+					add( new FormComponent( "javax.swing.JLabel" ) {
+						name: "labelArchivBestandFile"
+						"text": "Archiv-Bestand-Datei:"
+						auxiliary() {
+							"JavaCodeGenerator.variableGetter": true
+						}
+					}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
+						"gridy": 1
+						"insets": new java.awt.Insets( 2, 2, 2, 2 )
+					} )
+					add( new FormComponent( "javax.swing.JTextField" ) {
+						name: "textFieldArchivBestandFile"
+						"editable": false
+						auxiliary() {
+							"JavaCodeGenerator.variableGetter": true
+						}
+					}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
+						"gridx": 1
+						"gridy": 1
+						"insets": new java.awt.Insets( 2, 2, 2, 2 )
+					} )
+					add( new FormComponent( "javax.swing.JButton" ) {
+						name: "buttonLocateArchivBestandFile"
+						"text": "Selektieren..."
+						"icon": #SwingIcon0
+						auxiliary() {
+							"JavaCodeGenerator.variableGetter": true
+						}
+					}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
+						"gridx": 2
+						"gridy": 1
+						"insets": new java.awt.Insets( 2, 2, 2, 2 )
+					} )
+					add( new FormComponent( "javax.swing.JButton" ) {
+						name: "buttonDownloadArchivBestandFile"
+						"text": "Downloaden..."
+						"icon": #SwingIcon1
+						auxiliary() {
+							"JavaCodeGenerator.variableGetter": true
+						}
+					}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
+						"gridx": 3
+						"gridy": 1
+						"insets": new java.awt.Insets( 2, 2, 2, 2 )
+					} )
+				}, new FormLayoutConstraints( class java.lang.String ) {
+					"value": "right"
+				} )
+			}, new FormLayoutConstraints( class java.lang.String ) {
+				"value": "Center"
+			} )
+		}, new FormLayoutConstraints( null ) {
+			"location": new java.awt.Point( 0, 5 )
+			"size": new java.awt.Dimension( 695, 500 )
+		} )
+	}
+}

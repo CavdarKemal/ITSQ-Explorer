@@ -51,8 +51,16 @@ public class ItsqViewTabPanel extends JPanel {
         return panelEditor;
     }
 
-    public ItsqEditorView getPanelOptions() {
-        return panelOptions;
+    public ItsqOptionsEditorView getPanelOptionsEditor() {
+        return panelOptionsEditor;
+    }
+
+    public ItsqRefExportPropertiesEditorView getPanelRelevanzPropertiesEditor() {
+        return panelRelevanzPropertiesEditor;
+    }
+
+    public ItsqTestCrefosPropertiesEditorView getPanelTestCrefosPropertiesEditor() {
+        return panelTestCrefosPropertiesEditor;
     }
 
     private void initComponents() {
@@ -65,8 +73,9 @@ public class ItsqViewTabPanel extends JPanel {
         panelCustomer = new ItsqCustomerView();
         panelScenario = new ItsqScenarioView();
         panelEditor = new ItsqEditorView();
-        panelOptions = new ItsqEditorView();
-        panelScenarioProperties = new ItsqEditorView();
+        panelOptionsEditor = new ItsqOptionsEditorView();
+        panelRelevanzPropertiesEditor = new ItsqRefExportPropertiesEditorView();
+        panelTestCrefosPropertiesEditor = new ItsqTestCrefosPropertiesEditorView();
 
         //======== this ========
         setBorder(new EtchedBorder());
@@ -82,8 +91,9 @@ public class ItsqViewTabPanel extends JPanel {
         add(panelCustomer, "cardCustomer");
         add(panelScenario, "cardScenario");
         add(panelEditor, "cardXml");
-        add(panelOptions, "cardOptions");
-        add(panelScenarioProperties, "cardScenarioProperties");
+        add(panelOptionsEditor, "cardOptionsEditor");
+        add(panelRelevanzPropertiesEditor, "cardRelevanzPropertiesEditor");
+        add(panelTestCrefosPropertiesEditor, "cardTestCrefosPropertiesEditor");
         // JFormDesigner - End of component initialization  //GEN-END:initComponents  @formatter:on
     }
 
@@ -96,7 +106,8 @@ public class ItsqViewTabPanel extends JPanel {
     private ItsqCustomerView panelCustomer;
     private ItsqScenarioView panelScenario;
     private ItsqEditorView panelEditor;
-    private ItsqEditorView panelOptions;
-    private ItsqEditorView panelScenarioProperties;
+    private ItsqOptionsEditorView panelOptionsEditor;
+    private ItsqRefExportPropertiesEditorView panelRelevanzPropertiesEditor;
+    private ItsqTestCrefosPropertiesEditorView panelTestCrefosPropertiesEditor;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 }

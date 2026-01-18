@@ -199,31 +199,85 @@ ITSQ/
 |----------|----------|
 | Ctrl+J | ItsqExplorerView oeffnen |
 
-## ItsqEditorView (Datei-Editor)
+## ItsqEditorView (XML-Editor)
 
-Die ItsqEditorView ist ein Dual-Modus-Editor.
+Die ItsqEditorView ist ein spezialisierter Editor fuer XML-Dateien.
 
-### Modi
+### Features
 
-| Dateityp | Modus | Beschreibung |
-|----------|-------|--------------|
-| `.xml` | XML-Editor | RSyntaxTextArea mit Syntax-Highlighting |
-| `.cfg`, `.properties` | Tabellen-Editor | JTable mit Name/Wert-Spalten |
-
-### XML-Modus Features
-
-- **Syntax-Highlighting** fuer XML
+- **Syntax-Highlighting** fuer XML mit RSyntaxTextArea
 - **Zeilennummern** und **Code-Folding**
 - **Suche**: Strg+F fokussiert Filter, F3 = weiter, Shift+F3 = zurueck
 - **Gehe zu Zeile**: Strg+G
 - **Speichern**: Strg+S
 
-### Properties-Modus Features
+## Properties-Editoren
 
-- **Tabellen-Editor** mit Spalten "Name" und "Wert"
-- **CRUD-Buttons** in der Toolbar: Neu, Aendern, Loeschen
-- **Live-Filter**: Filtert sofort nach Name oder Wert
+Fuer die verschiedenen Properties-Dateitypen gibt es spezialisierte Editoren:
+
+### ItsqRefExportPropertiesEditorView (Relevanz.properties)
+
+Editor fuer REF-EXPORT Testfall-Definitionen.
+
+| Spalte | Beschreibung |
+|--------|--------------|
+| Testname | Name des Testfalls (p01, n01, x01, ...) |
+| Crefonummer | Crefo-Nummer des Testfalls |
+| Info | Kommentar/Beschreibung |
+| Export | Soll exportiert werden (Boolean) |
+| REF-Export-Datei | Zugeordnete XML-Datei |
+
+**Features:**
+- **Dateiformat**: `testname=crefonummer # kommentar`
+- **Live-Filter**: Filtert nach Testname, Crefonummer oder Info
+- **CRUD-Operationen**: Neu, Bearbeiten, Loeschen
+- **Datei-Selektion**: FileChooser fuer REF-Export und ARCHIV-BESTAND Dateien
+- **Automatische Verzeichnis-Navigation**: ARCHIV-BESTAND FileChooser oeffnet im korrekten Phase-Verzeichnis
+
+### ItsqTestCrefosPropertiesEditorView (TestCrefos.properties)
+
+Editor fuer AB30XML-Properties (Crefo-Stammdaten).
+
+| Spalte | Beschreibung |
+|--------|--------------|
+| Crefonummer | Crefo-Nummer |
+| Kunden | Liste der Kunden die diese Crefo verwenden |
+| CLZ | Auftrags-CLZ |
+| Btlg-List | Liste der Beteiligungen |
+| Bilanz-Typ | BILANZ, HGB, IFRS, etc. |
+| Prod-Auft. | EH-Produktauftrag-Typ |
+| Statistik | CTA-Statistik aktiv (Boolean) |
+| DSGVO-Sperre | DSGVO-Sperre aktiv (Boolean) |
+
+**Features:**
+- **Versions-Unterstuetzung**: Automatische Erkennung der Dateiversion
+- **Live-Filter**: Filtert nach Crefonummer, Kunde oder CLZ
+- **CRUD-Operationen** mit spezialisierten Dialogen (ComboBox fuer Enums)
+
+### ItsqOptionsEditorView (Options.cfg)
+
+Editor fuer allgemeine Konfigurations-Dateien.
+
+| Spalte | Beschreibung |
+|--------|--------------|
+| Name | Property-Name |
+| Wert | Property-Wert |
+
+**Features:**
+- **Dateiformat**: `name=wert` oder `name:wert`
+- **Live-Filter**: Filtert nach Name oder Wert
+- **CRUD-Operationen**: Neu, Bearbeiten, Loeschen
 - **Kommentar-Erhaltung**: Zeilen mit `#` oder `!` bleiben beim Speichern erhalten
+
+### Gemeinsame Tastenkuerzel (alle Properties-Editoren)
+
+| Shortcut | Funktion |
+|----------|----------|
+| Strg+F | Filter fokussieren |
+| Strg+S | Speichern |
+| Strg+N | Neuer Eintrag |
+| Enter | Eintrag bearbeiten |
+| Delete | Eintrag loeschen |
 
 ## DatabaseView
 
@@ -342,15 +396,22 @@ ItsqItemSelectable (Interface)
     │
     ├── ItsqMainView       # Haupt-Container
     ├── ItsqTreeView       # Tree-Ansicht
-    ├── ItsqViewTabView    # Tab-Container
-    ├── ItsqEditorView     # Datei-Editor
-    ├── ItsqRootView       # Root-Details
-    ├── ItsqCustomerView   # Kunden-Details
-    ├── ItsqScenarioView   # Szenario-Details
-    ├── ItsqRefExportsView # REF-EXPORTS-Details
-    ├── ItsqRefExportsPhaseView
-    ├── ItsqArchivBestandView
-    └── ItsqArchibBestandPhaseView
+    ├── ItsqViewTabView    # Tab-Container (CardLayout)
+    │
+    ├── Editor-Views:
+    │   ├── ItsqEditorView                    # XML-Editor
+    │   ├── ItsqRefExportPropertiesEditorView # Relevanz.properties Editor
+    │   ├── ItsqTestCrefosPropertiesEditorView # TestCrefos.properties Editor
+    │   └── ItsqOptionsEditorView             # Options.cfg Editor
+    │
+    ├── Detail-Views:
+    │   ├── ItsqRootView       # Root-Details
+    │   ├── ItsqCustomerView   # Kunden-Details
+    │   ├── ItsqScenarioView   # Szenario-Details
+    │   ├── ItsqRefExportsView # REF-EXPORTS-Details
+    │   ├── ItsqRefExportsPhaseView
+    │   ├── ItsqArchivBestandView
+    │   └── ItsqArchibBestandPhaseView
 ```
 
 ## Neue View erstellen

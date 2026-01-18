@@ -25,6 +25,13 @@ public class ItsqViewTabView extends ItsqViewTabPanel {
     private static final String CARD_SCENARIO = "cardScenario";
     private static final String CARD_CUSTOMER = "cardCustomer";
     private static final String CARD_XML = "cardXml";
+    private static final String CARD_OPTIONS_EDITOR = "cardOptionsEditor";
+    private static final String CARD_RELEVANZ_PROPERTIES_EDITOR = "cardRelevanzPropertiesEditor";
+    private static final String CARD_TESTCREFOS_PROPERTIES_EDITOR = "cardTestCrefosPropertiesEditor";
+
+    // Known properties file names
+    private static final String RELEVANZ_PROPERTIES = "Relevanz.properties";
+    private static final String TESTCREFOS_PROPERTIES = "TestCrefos.properties";
 
     public ItsqViewTabView() {
         super();
@@ -73,12 +80,31 @@ public class ItsqViewTabView extends ItsqViewTabPanel {
             return CARD_CUSTOMER;
         } else if (node instanceof ItsqScenarioTreeNode) {
             return CARD_SCENARIO;
-        } else if (node instanceof ItsqXmlTreeNode
-                || node instanceof ItsqOptionsTreeNode
-                || node instanceof ItsqPropertiesTreeNode) {
+        } else if (node instanceof ItsqOptionsTreeNode) {
+            return CARD_OPTIONS_EDITOR;
+        } else if (node instanceof ItsqPropertiesTreeNode) {
+            return determinePropertiesCard(node);
+        } else if (node instanceof ItsqXmlTreeNode) {
             return CARD_XML;
         }
         return CARD_ROOT;
+    }
+
+    /**
+     * Determines which properties editor card to show based on the file name.
+     */
+    private String determinePropertiesCard(ItsqTreeNode node) {
+        ItsqItem item = node.getItsqItem();
+        if (item != null && item.getFile() != null) {
+            String fileName = item.getFile().getName();
+            if (RELEVANZ_PROPERTIES.equalsIgnoreCase(fileName)) {
+                return CARD_RELEVANZ_PROPERTIES_EDITOR;
+            } else if (TESTCREFOS_PROPERTIES.equalsIgnoreCase(fileName)) {
+                return CARD_TESTCREFOS_PROPERTIES_EDITOR;
+            }
+        }
+        // Default to Relevanz properties editor for unknown properties files
+        return CARD_RELEVANZ_PROPERTIES_EDITOR;
     }
 
     /**
@@ -109,6 +135,9 @@ public class ItsqViewTabView extends ItsqViewTabPanel {
             case CARD_CUSTOMER -> getPanelCustomer();
             case CARD_SCENARIO -> getPanelScenario();
             case CARD_XML -> getPanelEditor();
+            case CARD_OPTIONS_EDITOR -> getPanelOptionsEditor();
+            case CARD_RELEVANZ_PROPERTIES_EDITOR -> getPanelRelevanzPropertiesEditor();
+            case CARD_TESTCREFOS_PROPERTIES_EDITOR -> getPanelTestCrefosPropertiesEditor();
             default -> null;
         };
     }
