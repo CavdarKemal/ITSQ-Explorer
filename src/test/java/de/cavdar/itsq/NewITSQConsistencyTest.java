@@ -33,8 +33,20 @@ import static org.junit.jupiter.api.Assertions.*;
 public class NewITSQConsistencyTest {
 
     private static final String BASE_PATH = "/ITSQ/NEW";
-    private static final String ARCHIV_BESTAND = BASE_PATH + "/ARCHIV-BESTAND";
-    private static final String REF_EXPORTS = BASE_PATH + "/REF-EXPORTS";
+
+    private static final String ARCHIV_BESTAND = "ARCHIV-BESTAND";
+    private static final String REF_EXPORTS = "REF-EXPORTS";
+    private static final String PHASE_1 = "PHASE-1";
+    private static final String PHASE_2 = "PHASE-2";
+
+    private static final String ARCHIV_BESTAND_ROOT = BASE_PATH + "/" + ARCHIV_BESTAND;
+    private static final String ARCHIV_BESTAND_PHASE_1_ROOT = ARCHIV_BESTAND_ROOT + "/" + PHASE_1;
+    private static final String ARCHIV_BESTAND_PHASE_2_ROOT = ARCHIV_BESTAND_ROOT + "/" + PHASE_2;
+
+    private static final String REF_EXPORTS_ROOT = BASE_PATH + "/" + REF_EXPORTS;
+    private static final String REF_EXPORTS_PHASE_1_ROOT = REF_EXPORTS_ROOT + "/" + PHASE_1;
+    private static final String REF_EXPORTS_PHASE_2_ROOT = REF_EXPORTS_ROOT + "/" + PHASE_2;
+
     private static final String TEST_CREFOS_FILE = "TestCrefos.properties";
 
     // PHASE-1 hat nur c01, c02
@@ -53,12 +65,10 @@ public class NewITSQConsistencyTest {
         errors = new ArrayList<>();
 
         // Lade Kunden fuer beide Phasen
-        customerTestInfoMapMap.put(
-                TestSupportClientKonstanten.TEST_PHASE.PHASE_1,
-                loadCustomersFromClasspath(REF_EXPORTS + "/PHASE-1", ARCHIV_BESTAND + "/PHASE-1", CUSTOMERS_PHASE1));
-        customerTestInfoMapMap.put(
-                TestSupportClientKonstanten.TEST_PHASE.PHASE_2,
-                loadCustomersFromClasspath(REF_EXPORTS + "/PHASE-2", ARCHIV_BESTAND + "/PHASE-2", CUSTOMERS_PHASE2));
+        customerTestInfoMapMap.put(TestSupportClientKonstanten.TEST_PHASE.PHASE_1,
+                loadCustomersFromClasspath(REF_EXPORTS_PHASE_1_ROOT, ARCHIV_BESTAND_PHASE_1_ROOT, CUSTOMERS_PHASE1));
+        customerTestInfoMapMap.put(TestSupportClientKonstanten.TEST_PHASE.PHASE_2,
+                loadCustomersFromClasspath(REF_EXPORTS_PHASE_2_ROOT, ARCHIV_BESTAND_PHASE_2_ROOT, CUSTOMERS_PHASE2));
     }
 
     /**
@@ -262,7 +272,7 @@ public class NewITSQConsistencyTest {
             // Hole ARCHIV-BESTAND Pfad fuer diese Phase
             Path archivBestandPhasePath;
             try {
-                archivBestandPhasePath = getResourcePath(ARCHIV_BESTAND + "/" + phase.getDirName());
+                archivBestandPhasePath = getResourcePath(ARCHIV_BESTAND_ROOT + "/" + phase.getDirName());
             } catch (URISyntaxException e) {
                 errors.add(String.format("[ARCHIV-BESTAND] Fehler beim Laden von %s: %s",
                         phase.getDirName(), e.getMessage()));
@@ -327,7 +337,7 @@ public class NewITSQConsistencyTest {
             // Hole TestCrefos.properties Pfad fuer diese Phase
             Path testCrefosPath;
             try {
-                testCrefosPath = getResourcePath(ARCHIV_BESTAND + "/" + phase.getDirName() + "/" + TEST_CREFOS_FILE);
+                testCrefosPath = getResourcePath(ARCHIV_BESTAND_ROOT + "/" + phase.getDirName() + "/" + TEST_CREFOS_FILE);
             } catch (URISyntaxException e) {
                 errors.add(String.format("[TestCrefos] Fehler beim Laden von %s/%s: %s",
                         phase.getDirName(), TEST_CREFOS_FILE, e.getMessage()));

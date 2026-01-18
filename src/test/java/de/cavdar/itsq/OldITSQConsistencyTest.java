@@ -34,9 +34,17 @@ import static org.junit.jupiter.api.Assertions.*;
 public class OldITSQConsistencyTest {
 
     private static final String BASE_PATH = "/ITSQ/OLD";
-    private static final String ARCHIV_BESTAND_PH1 = BASE_PATH + "/ARCHIV-BESTAND-PH1";
-    private static final String ARCHIV_BESTAND_PH2 = BASE_PATH + "/ARCHIV-BESTAND-PH2";
-    private static final String REF_EXPORTS = BASE_PATH + "/REF-EXPORTS";
+
+    private static final String ARCHIV_BESTAND = "ARCHIV-BESTAND";
+    private static final String REF_EXPORTS = "REF-EXPORTS";
+    private static final String PHASE_1 = "PH1";
+    private static final String PHASE_2 = "PH2";
+
+    private static final String ARCHIV_BESTAND_PH1_ROOT = BASE_PATH + "/" + ARCHIV_BESTAND + "-" + PHASE_1;
+    private static final String ARCHIV_BESTAND_PH2_ROOT = BASE_PATH + "/" + ARCHIV_BESTAND + "-" + PHASE_2;
+
+    private static final String REF_EXPORTS_ROOT = BASE_PATH + "/" + REF_EXPORTS;
+
     private static final String TEST_CREFOS_FILE = "TestCrefos.properties";
 
     // OLD Struktur hat c01-c05 fuer beide Phasen (gemeinsame REF-EXPORTS)
@@ -55,10 +63,10 @@ public class OldITSQConsistencyTest {
         // Lade Kunden fuer beide Phasen (OLD Struktur: gemeinsame REF-EXPORTS)
         customerTestInfoMapMap.put(
                 TestSupportClientKonstanten.TEST_PHASE.PHASE_1,
-                loadCustomersFromClasspath(REF_EXPORTS, ARCHIV_BESTAND_PH1, CUSTOMERS));
+                loadCustomersFromClasspath(REF_EXPORTS_ROOT, ARCHIV_BESTAND_PH1_ROOT, CUSTOMERS));
         customerTestInfoMapMap.put(
                 TestSupportClientKonstanten.TEST_PHASE.PHASE_2,
-                loadCustomersFromClasspath(REF_EXPORTS, ARCHIV_BESTAND_PH2, CUSTOMERS));
+                loadCustomersFromClasspath(REF_EXPORTS_ROOT, ARCHIV_BESTAND_PH2_ROOT, CUSTOMERS));
     }
 
     /**
@@ -261,7 +269,7 @@ public class OldITSQConsistencyTest {
 
             // Hole ARCHIV-BESTAND Pfad fuer diese Phase (OLD Struktur: PH1/PH2)
             String archivBestandPathStr = phase == TestSupportClientKonstanten.TEST_PHASE.PHASE_1
-                    ? ARCHIV_BESTAND_PH1 : ARCHIV_BESTAND_PH2;
+                    ? ARCHIV_BESTAND_PH1_ROOT : ARCHIV_BESTAND_PH2_ROOT;
             Path archivBestandPhasePath;
             try {
                 archivBestandPhasePath = getResourcePath(archivBestandPathStr);
@@ -328,7 +336,7 @@ public class OldITSQConsistencyTest {
 
             // Hole TestCrefos.properties Pfad fuer diese Phase (OLD Struktur: PH1/PH2)
             String archivBestandPathStr = phase == TestSupportClientKonstanten.TEST_PHASE.PHASE_1
-                    ? ARCHIV_BESTAND_PH1 : ARCHIV_BESTAND_PH2;
+                    ? ARCHIV_BESTAND_PH1_ROOT : ARCHIV_BESTAND_PH2_ROOT;
             Path testCrefosPath;
             try {
                 testCrefosPath = getResourcePath(archivBestandPathStr + "/" + TEST_CREFOS_FILE);
