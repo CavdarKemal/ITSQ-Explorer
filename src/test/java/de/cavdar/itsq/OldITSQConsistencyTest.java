@@ -29,7 +29,7 @@ public class OldITSQConsistencyTest extends ITSQConsistencyTestBase {
     private static final String REF_EXPORTS_ROOT = BASE_PATH + "/" + REF_EXPORTS;
 
     // OLD Struktur hat c01-c06 fuer beide Phasen (gemeinsame REF-EXPORTS)
-    private static final List<String> CUSTOMERS = List.of("c01", "c02", "c03", "c04", "c05", "c06");
+    private static final List<String> CUSTOMERS = List.of("c01", "c02", "c03", "c04", "c05", "c06", "c07");
 
     @Override
     protected String getArchivBestandPath(TestSupportClientKonstanten.TEST_PHASE phase) {

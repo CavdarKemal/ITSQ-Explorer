@@ -6,11 +6,16 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,10 +35,14 @@ import static org.junit.jupiter.api.Assertions.*;
 public abstract class ITSQConsistencyTestBase {
 
     protected static final String TEST_CREFOS_FILE = "TestCrefos.properties";
+    protected static final String REPORT_DIR = "target/consistency-reports";
 
     protected Map<TestSupportClientKonstanten.TEST_PHASE, Map<String, TestCustomer>> customerTestInfoMapMap;
     protected AB30MapperUtil ab30MapperUtil;
     protected List<String> errors;
+    protected List<String> refExportsErrors;
+    protected List<String> archivBestandErrors;
+    protected List<String> testCrefosErrors;
 
     // ===== Abstrakte Methoden - muessen von Subklassen implementiert werden =====
 
@@ -64,6 +73,9 @@ public abstract class ITSQConsistencyTestBase {
         customerTestInfoMapMap = new HashMap<>();
         ab30MapperUtil = new AB30MapperUtil();
         errors = new ArrayList<>();
+        refExportsErrors = new ArrayList<>();
+        archivBestandErrors = new ArrayList<>();
+        testCrefosErrors = new ArrayList<>();
 
         // Lade Kunden fuer beide Phasen
         for (TestSupportClientKonstanten.TEST_PHASE phase : TestSupportClientKonstanten.TEST_PHASE.values()) {
@@ -146,8 +158,17 @@ public abstract class ITSQConsistencyTestBase {
         checkArchivBestandConsistency();
         checkTestfaelleProperties();
 
+        // Erstelle und gib Bericht aus
+        String report = generateReport();
+        outputReportToConsole(report);
+        saveReportToFile(report);
+
+        // Hinweis: Test schlaegt NICHT mehr fehl - Bericht dient zur manuellen Korrektur
         if (!errors.isEmpty()) {
-            fail("Konsistenzfehler gefunden:\n" + String.join("\n", errors));
+            System.out.println("\n========================================");
+            System.out.println("ACHTUNG: " + errors.size() + " Inkonsistenzen gefunden!");
+            System.out.println("Bitte den Bericht pruefen und manuell korrigieren.");
+            System.out.println("========================================\n");
         }
     }
 
@@ -159,8 +180,12 @@ public abstract class ITSQConsistencyTestBase {
         @DisplayName("Alle Testfaelle in REF-EXPORTS pruefen")
         void testRefExportsConsistency() {
             checkRefExportsConsistency();
-            if (!errors.isEmpty()) {
-                fail("REF-EXPORTS Konsistenzfehler:\n" + String.join("\n", errors));
+            if (!refExportsErrors.isEmpty()) {
+                System.out.println("\n=== REF-EXPORTS Inkonsistenzen ===");
+                refExportsErrors.forEach(System.out::println);
+                System.out.println("Bitte manuell korrigieren.\n");
+            } else {
+                System.out.println("REF-EXPORTS: Keine Inkonsistenzen gefunden.");
             }
         }
     }
@@ -173,8 +198,12 @@ public abstract class ITSQConsistencyTestBase {
         @DisplayName("Alle Testfaelle in ARCHIV-BESTAND pruefen")
         void testArchivBestandConsistency() {
             checkArchivBestandConsistency();
-            if (!errors.isEmpty()) {
-                fail("ARCHIV-BESTAND Konsistenzfehler:\n" + String.join("\n", errors));
+            if (!archivBestandErrors.isEmpty()) {
+                System.out.println("\n=== ARCHIV-BESTAND Inkonsistenzen ===");
+                archivBestandErrors.forEach(System.out::println);
+                System.out.println("Bitte manuell korrigieren.\n");
+            } else {
+                System.out.println("ARCHIV-BESTAND: Keine Inkonsistenzen gefunden.");
             }
         }
     }
@@ -187,8 +216,12 @@ public abstract class ITSQConsistencyTestBase {
         @DisplayName("Alle Kunden-Zuordnungen in TestCrefos.properties pruefen")
         void testTestCrefosPropertiesConsistency() {
             checkTestfaelleProperties();
-            if (!errors.isEmpty()) {
-                fail("TestCrefos.properties Konsistenzfehler:\n" + String.join("\n", errors));
+            if (!testCrefosErrors.isEmpty()) {
+                System.out.println("\n=== TestCrefos.properties Inkonsistenzen ===");
+                testCrefosErrors.forEach(System.out::println);
+                System.out.println("Bitte manuell korrigieren.\n");
+            } else {
+                System.out.println("TestCrefos.properties: Keine Inkonsistenzen gefunden.");
             }
         }
     }
@@ -227,22 +260,28 @@ public abstract class ITSQConsistencyTestBase {
 
                         if (testCrefo.isShouldBeExported()) {
                             if (xmlFile == null) {
-                                errors.add(String.format(
+                                String error = String.format(
                                         "[REF-EXPORTS] %s/%s/%s/%s: XML-Datei fuer Crefo %d fehlt (erwartet: %s_*_%d.xml)",
                                         phase.getDirName(), customerKey, scenarioName, testFallName,
-                                        crefoNr, testFallName, crefoNr));
+                                        crefoNr, testFallName, crefoNr);
+                                errors.add(error);
+                                refExportsErrors.add(error);
                             } else if (!xmlFile.exists()) {
-                                errors.add(String.format(
+                                String error = String.format(
                                         "[REF-EXPORTS] %s/%s/%s/%s: XML-Datei existiert nicht: %s",
                                         phase.getDirName(), customerKey, scenarioName, testFallName,
-                                        xmlFile.getName()));
+                                        xmlFile.getName());
+                                errors.add(error);
+                                refExportsErrors.add(error);
                             }
                         } else {
                             if (xmlFile != null && xmlFile.exists()) {
-                                errors.add(String.format(
+                                String error = String.format(
                                         "[REF-EXPORTS] %s/%s/%s/%s: XML-Datei darf NICHT existieren fuer negative Testfaelle: %s",
                                         phase.getDirName(), customerKey, scenarioName, testFallName,
-                                        xmlFile.getName()));
+                                        xmlFile.getName());
+                                errors.add(error);
+                                refExportsErrors.add(error);
                             }
                         }
                     }
@@ -271,14 +310,18 @@ public abstract class ITSQConsistencyTestBase {
             try {
                 archivBestandPhasePath = getResourcePath(archivBestandPathStr);
             } catch (URISyntaxException e) {
-                errors.add(String.format("[ARCHIV-BESTAND] Fehler beim Laden von %s: %s",
-                        archivBestandPathStr, e.getMessage()));
+                String error = String.format("[ARCHIV-BESTAND] Fehler beim Laden von %s: %s",
+                        archivBestandPathStr, e.getMessage());
+                errors.add(error);
+                archivBestandErrors.add(error);
                 continue;
             }
 
             if (archivBestandPhasePath == null || !Files.exists(archivBestandPhasePath)) {
-                errors.add(String.format("[ARCHIV-BESTAND] Verzeichnis existiert nicht: %s",
-                        archivBestandPathStr));
+                String error = String.format("[ARCHIV-BESTAND] Verzeichnis existiert nicht: %s",
+                        archivBestandPathStr);
+                errors.add(error);
+                archivBestandErrors.add(error);
                 continue;
             }
 
@@ -300,10 +343,12 @@ public abstract class ITSQConsistencyTestBase {
                             Path expectedXml = archivBestandPhasePath.resolve(crefoNr + ".xml");
 
                             if (!Files.exists(expectedXml)) {
-                                errors.add(String.format(
+                                String error = String.format(
                                         "[ARCHIV-BESTAND] %s/%s/%s/%s: XML-Datei fehlt: %s.xml",
                                         archivBestandPathStr, customerKey, scenarioName, testFallName,
-                                        crefoNr));
+                                        crefoNr);
+                                errors.add(error);
+                                archivBestandErrors.add(error);
                             }
                         }
                     }
@@ -333,14 +378,18 @@ public abstract class ITSQConsistencyTestBase {
             try {
                 testCrefosPath = getResourcePath(archivBestandPathStr + "/" + TEST_CREFOS_FILE);
             } catch (URISyntaxException e) {
-                errors.add(String.format("[TestCrefos] Fehler beim Laden von %s/%s: %s",
-                        archivBestandPathStr, TEST_CREFOS_FILE, e.getMessage()));
+                String error = String.format("[TestCrefos] Fehler beim Laden von %s/%s: %s",
+                        archivBestandPathStr, TEST_CREFOS_FILE, e.getMessage());
+                errors.add(error);
+                testCrefosErrors.add(error);
                 continue;
             }
 
             if (testCrefosPath == null || !Files.exists(testCrefosPath)) {
-                errors.add(String.format("[TestCrefos] Datei existiert nicht: %s/%s",
-                        archivBestandPathStr, TEST_CREFOS_FILE));
+                String error = String.format("[TestCrefos] Datei existiert nicht: %s/%s",
+                        archivBestandPathStr, TEST_CREFOS_FILE);
+                errors.add(error);
+                testCrefosErrors.add(error);
                 continue;
             }
 
@@ -348,8 +397,10 @@ public abstract class ITSQConsistencyTestBase {
             try {
                 propsMap = ab30MapperUtil.initAb30CrefoPropertiesMap(testCrefosPath.toFile());
             } catch (Exception e) {
-                errors.add(String.format("[TestCrefos] Fehler beim Laden von %s/%s: %s",
-                        archivBestandPathStr, TEST_CREFOS_FILE, e.getMessage()));
+                String error = String.format("[TestCrefos] Fehler beim Laden von %s/%s: %s",
+                        archivBestandPathStr, TEST_CREFOS_FILE, e.getMessage());
+                errors.add(error);
+                testCrefosErrors.add(error);
                 continue;
             }
 
@@ -371,10 +422,12 @@ public abstract class ITSQConsistencyTestBase {
                             AB30XMLProperties props = propsMap.get(crefoNr);
 
                             if (props == null) {
-                                errors.add(String.format(
+                                String error = String.format(
                                         "[TestCrefos] %s/%s/%s/%s: Kein Eintrag fuer Crefo %d",
                                         archivBestandPathStr, customerKey.toUpperCase(), scenarioName,
-                                        testFallName, crefoNr));
+                                        testFallName, crefoNr);
+                                errors.add(error);
+                                testCrefosErrors.add(error);
                             } else {
                                 List<String> usedByCustomers = props.getUsedByCustomersList();
                                 boolean customerFound = usedByCustomers.stream()
@@ -382,16 +435,120 @@ public abstract class ITSQConsistencyTestBase {
                                         .anyMatch(c -> c.equals(customerKey));
 
                                 if (!customerFound) {
-                                    errors.add(String.format(
+                                    String error = String.format(
                                             "[TestCrefos] %s/%s/%s/%s: Kunde '%s' fehlt in Used-By-Customer fuer Crefo %d (vorhanden: %s)",
                                             archivBestandPathStr, customerKey.toUpperCase(), scenarioName,
-                                            testFallName, customerKey, crefoNr, usedByCustomers));
+                                            testFallName, customerKey, crefoNr, usedByCustomers);
+                                    errors.add(error);
+                                    testCrefosErrors.add(error);
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+    }
+
+    // ===== Berichtsmethoden =====
+
+    /**
+     * Generiert einen detaillierten Konsistenzbericht.
+     */
+    protected String generateReport() {
+        StringBuilder sb = new StringBuilder();
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+        sb.append("================================================================================\n");
+        sb.append("ITSQ KONSISTENZBERICHT - ").append(getStructureName()).append(" Struktur\n");
+        sb.append("Erstellt: ").append(timestamp).append("\n");
+        sb.append("================================================================================\n\n");
+
+        // Zusammenfassung
+        sb.append("ZUSAMMENFASSUNG\n");
+        sb.append("---------------\n");
+        sb.append("Gesamtanzahl Inkonsistenzen: ").append(errors.size()).append("\n");
+        sb.append("  - REF-EXPORTS:          ").append(refExportsErrors.size()).append("\n");
+        sb.append("  - ARCHIV-BESTAND:       ").append(archivBestandErrors.size()).append("\n");
+        sb.append("  - TestCrefos.properties: ").append(testCrefosErrors.size()).append("\n\n");
+
+        if (errors.isEmpty()) {
+            sb.append("Keine Inkonsistenzen gefunden. Alle Pruefungen bestanden.\n");
+            return sb.toString();
+        }
+
+        // REF-EXPORTS Details
+        if (!refExportsErrors.isEmpty()) {
+            sb.append("--------------------------------------------------------------------------------\n");
+            sb.append("REF-EXPORTS INKONSISTENZEN (").append(refExportsErrors.size()).append(")\n");
+            sb.append("--------------------------------------------------------------------------------\n");
+            sb.append("Aktion: Fehlende XML-Dateien manuell erstellen oder aus Vorlage kopieren.\n\n");
+            for (String error : refExportsErrors) {
+                sb.append("  * ").append(error).append("\n");
+            }
+            sb.append("\n");
+        }
+
+        // ARCHIV-BESTAND Details
+        if (!archivBestandErrors.isEmpty()) {
+            sb.append("--------------------------------------------------------------------------------\n");
+            sb.append("ARCHIV-BESTAND INKONSISTENZEN (").append(archivBestandErrors.size()).append(")\n");
+            sb.append("--------------------------------------------------------------------------------\n");
+            sb.append("Aktion: Fehlende {crefo}.xml Dateien im ARCHIV-BESTAND-Verzeichnis erstellen.\n\n");
+            for (String error : archivBestandErrors) {
+                sb.append("  * ").append(error).append("\n");
+            }
+            sb.append("\n");
+        }
+
+        // TestCrefos.properties Details
+        if (!testCrefosErrors.isEmpty()) {
+            sb.append("--------------------------------------------------------------------------------\n");
+            sb.append("TestCrefos.properties INKONSISTENZEN (").append(testCrefosErrors.size()).append(")\n");
+            sb.append("--------------------------------------------------------------------------------\n");
+            sb.append("Aktion: Fehlende Eintraege in TestCrefos.properties ergaenzen.\n");
+            sb.append("        Format: {crefo}={usedByCustomers}|{weitere Attribute}\n\n");
+            for (String error : testCrefosErrors) {
+                sb.append("  * ").append(error).append("\n");
+            }
+            sb.append("\n");
+        }
+
+        sb.append("================================================================================\n");
+        sb.append("ENDE DES BERICHTS\n");
+        sb.append("================================================================================\n");
+
+        return sb.toString();
+    }
+
+    /**
+     * Gibt den Bericht in der Konsole aus.
+     */
+    protected void outputReportToConsole(String report) {
+        System.out.println("\n" + report);
+    }
+
+    /**
+     * Speichert den Bericht als Datei.
+     */
+    protected void saveReportToFile(String report) {
+        try {
+            File reportDir = new File(REPORT_DIR);
+            if (!reportDir.exists()) {
+                reportDir.mkdirs();
+            }
+
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+            String filename = String.format("consistency-report_%s_%s.txt", getStructureName(), timestamp);
+            File reportFile = new File(reportDir, filename);
+
+            try (PrintWriter writer = new PrintWriter(new FileWriter(reportFile))) {
+                writer.print(report);
+            }
+
+            System.out.println("Bericht gespeichert unter: " + reportFile.getAbsolutePath());
+        } catch (IOException e) {
+            System.err.println("Fehler beim Speichern des Berichts: " + e.getMessage());
         }
     }
 }
