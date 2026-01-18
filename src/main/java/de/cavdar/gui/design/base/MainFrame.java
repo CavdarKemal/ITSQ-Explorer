@@ -36,11 +36,13 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
     // Config toolbar components
     private JComboBox<String> configComboBox;
     private JComboBox<String> cbDbConnections;
+/*
     private JCheckBox chkDump;
     private JCheckBox chkSftpUpload;
     private JCheckBox chkExportProtokoll;
     private JCheckBox chkUploadSynthetics;
     private JCheckBox chkOnlyTestClz;
+*/
 
     private File configDirectory;
     private String currentConfigName;
@@ -144,15 +146,14 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
         toolbar.addSeparator();
 
         // === Checkboxes ===
+/*
         chkDump = createToolbarCheckBox(toolbar, "Dump", "DUMP_IN_REST_CLIENT");
         chkSftpUpload = createToolbarCheckBox(toolbar, "SFTP", "SFTP_UPLOAD_ACTIVE");
         chkExportProtokoll = createToolbarCheckBox(toolbar, "Export", "CHECK-EXPORT-PROTOKOLL-ACTIVE");
         chkUploadSynthetics = createToolbarCheckBox(toolbar, "Synth", "LAST_UPLOAD_SYNTHETICS");
         chkOnlyTestClz = createToolbarCheckBox(toolbar, "TestClz", "LAST_USE_ONLY_TEST_CLZ");
-
+*/
         toolbar.addSeparator();
-        toolbar.add(new JLabel(" Views: "));
-
         return toolbar;
     }
 
@@ -233,6 +234,7 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
         toolbar.add(refreshBtn);
     }
 
+/*
     private JCheckBox createToolbarCheckBox(JToolBar toolbar, String label, String propertyKey) {
         JCheckBox cb = new JCheckBox(label, cfg.getBool(propertyKey));
         cb.setToolTipText(propertyKey);
@@ -244,6 +246,7 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
         toolbar.add(cb);
         return cb;
     }
+*/
 
     /**
      * Registers a view type for menu and optional toolbar access.
@@ -448,11 +451,13 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
         }
 
         // Save checkbox states
+/*
         cfg.setProperty("DUMP_IN_REST_CLIENT", String.valueOf(chkDump.isSelected()));
         cfg.setProperty("SFTP_UPLOAD_ACTIVE", String.valueOf(chkSftpUpload.isSelected()));
         cfg.setProperty("CHECK-EXPORT-PROTOKOLL-ACTIVE", String.valueOf(chkExportProtokoll.isSelected()));
         cfg.setProperty("LAST_UPLOAD_SYNTHETICS", String.valueOf(chkUploadSynthetics.isSelected()));
         cfg.setProperty("LAST_USE_ONLY_TEST_CLZ", String.valueOf(chkOnlyTestClz.isSelected()));
+*/
 
         cfg.save();
     }
@@ -516,12 +521,14 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
             }
 
             // Reload checkboxes
+/*
             if (chkDump != null) chkDump.setSelected(cfg.getBool("DUMP_IN_REST_CLIENT"));
             if (chkSftpUpload != null) chkSftpUpload.setSelected(cfg.getBool("SFTP_UPLOAD_ACTIVE"));
             if (chkExportProtokoll != null)
                 chkExportProtokoll.setSelected(cfg.getBool("CHECK-EXPORT-PROTOKOLL-ACTIVE"));
             if (chkUploadSynthetics != null) chkUploadSynthetics.setSelected(cfg.getBool("LAST_UPLOAD_SYNTHETICS"));
             if (chkOnlyTestClz != null) chkOnlyTestClz.setSelected(cfg.getBool("LAST_USE_ONLY_TEST_CLZ"));
+*/
         } finally {
             isReloading = false;
         }
