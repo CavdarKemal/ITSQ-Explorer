@@ -128,6 +128,10 @@ public class AppConfig {
     }
 
     private final Properties props = new Properties();
+    /** Lock für atomare clear+load Operationen.
+     *  Properties (Hashtable) ist per-Operation thread-safe, aber clear+load
+     *  zusammen müssen atomar sein, damit Reader nie einen leeren Zustand sehen. */
+    private final Object propsLock = new Object();
 
     private AppConfig() {
         load();
@@ -175,16 +179,24 @@ public class AppConfig {
             return false;
         }
 
+        // Erst in temporäre Properties laden, dann atomar tauschen
+        Properties newProps = new Properties();
         try (InputStream is = new FileInputStream(file)) {
-            props.clear();
-            props.load(is);
-            currentFilePath = file.getAbsolutePath();
-            TimelineLogger.info(AppConfig.class, "Configuration loaded from {} (now active for saving)", currentFilePath);
-            return true;
+            newProps.load(is);
         } catch (IOException e) {
             TimelineLogger.error(AppConfig.class, "Failed to load configuration from {}", path, e);
             return false;
         }
+
+        // Atomarer Swap unter Lock — Reader sehen entweder den alten oder neuen Zustand,
+        // niemals einen leeren Zwischenzustand
+        synchronized (propsLock) {
+            props.clear();
+            props.putAll(newProps);
+            currentFilePath = file.getAbsolutePath();
+        }
+        TimelineLogger.info(AppConfig.class, "Configuration loaded from {} (now active for saving)", currentFilePath);
+        return true;
     }
 
     /**
