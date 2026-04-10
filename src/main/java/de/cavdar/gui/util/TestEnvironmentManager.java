@@ -224,6 +224,34 @@ public class TestEnvironmentManager {
     }
 
     /**
+     * Liest alle vier State-Felder unter einer einzigen Lock-Akquise und
+     * liefert einen atomaren Snapshot. Wird (auch) von Concurrency-Tests
+     * gebraucht, um torn reads von außen zuverlässig auszuschließen — die
+     * separaten Getter haben das ABA-Problem, weil zwischen zwei Aufrufen
+     * der Lock freigegeben wird.
+     */
+    public static StateSnapshot getCurrentStateSnapshot() {
+        synchronized (STATE_LOCK) {
+            return new StateSnapshot(currentEnvironment, currentEnvDir, currentLogsDir, currentTestOutputsDir);
+        }
+    }
+
+    /** Atomarer Snapshot des TestEnvironmentManager-State. */
+    public static final class StateSnapshot {
+        public final String environment;
+        public final File envDir;
+        public final File logsDir;
+        public final File testOutputsDir;
+
+        StateSnapshot(String environment, File envDir, File logsDir, File testOutputsDir) {
+            this.environment = environment;
+            this.envDir = envDir;
+            this.logsDir = logsDir;
+            this.testOutputsDir = testOutputsDir;
+        }
+    }
+
+    /**
      * Returns the current log file path.
      */
     public static String getCurrentLogFilePath() {
