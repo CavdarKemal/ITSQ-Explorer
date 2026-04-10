@@ -1,5 +1,6 @@
 package de.cavdar.gui.model.base;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Objects;
 
@@ -82,7 +83,9 @@ public class ConnectionInfo {
      * @return serialized connection string
      */
     public String serialize() {
-        String encodedPwd = Base64.getEncoder().encodeToString(password.getBytes());
+        // UTF-8 explizit, sonst kann das Default-Charset (z.B. Cp1252 auf Windows)
+        // CJK/Cyrillic-Passwörter nicht roundtripen
+        String encodedPwd = Base64.getEncoder().encodeToString(password.getBytes(StandardCharsets.UTF_8));
         return name + "|" + driver + "|" + url + "|" + username + "|" + encodedPwd;
     }
 
@@ -99,7 +102,7 @@ public class ConnectionInfo {
         String[] parts = data.split("\\|", 5);
         if (parts.length >= 5) {
             try {
-                String pwd = new String(Base64.getDecoder().decode(parts[4]));
+                String pwd = new String(Base64.getDecoder().decode(parts[4]), StandardCharsets.UTF_8);
                 return new ConnectionInfo(parts[0], parts[1], parts[2], parts[3], pwd);
             } catch (IllegalArgumentException e) {
                 return null;
