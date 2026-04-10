@@ -46,7 +46,12 @@ public class DatabaseView extends BaseView implements ConnectionManager.Connecti
     private static final int MAX_HISTORY_SIZE = 20;
 
     private DatabaseViewPanel dbPanel;
-    private Connection connection;
+    /**
+     * volatile, weil das Feld vom Background-Worker (connect/executeQuery)
+     * geschrieben und vom EDT (toggleConnection, treeWillExpand) gelesen wird.
+     * Ohne volatile gibt es keine happens-before Garantie zwischen den Threads.
+     */
+    private volatile Connection connection;
     private String preselectedConnection;
     private final AppConfig cfg = AppConfig.getInstance();
 
@@ -259,14 +264,16 @@ public class DatabaseView extends BaseView implements ConnectionManager.Connecti
                 Class.forName(driver);
                 connection = DriverManager.getConnection(url, username, password);
 
+                // GUI-Status auf EDT setzen, JDBC-Metadaten danach im Background laden
                 SwingUtilities.invokeLater(() -> {
                     dbPanel.getStatusLabel().setText("Verbunden: " + url);
                     dbPanel.getStatusLabel().setForeground(new Color(0, 128, 0));
                     dbPanel.getConnectButton().setText("Trennen");
                     dbPanel.getExecuteButton().setEnabled(true);
-                    loadTables();
-                    TimelineLogger.info(DatabaseView.class, "Database connection established");
                 });
+                // loadTables() bleibt im Background-Worker — JDBC darf NICHT auf dem EDT laufen
+                loadTables();
+                TimelineLogger.info(DatabaseView.class, "Database connection established");
             } catch (ClassNotFoundException e) {
                 TimelineLogger.error(DatabaseView.class, "JDBC driver not found: {}", driver, e);
                 SwingUtilities.invokeLater(() -> {
@@ -289,79 +296,102 @@ public class DatabaseView extends BaseView implements ConnectionManager.Connecti
     }
 
     private void disconnect() {
-        try {
-            if (connection != null && !connection.isClosed()) {
-                connection.close();
-                TimelineLogger.info(DatabaseView.class, "Database connection closed");
-            }
-        } catch (SQLException e) {
-            TimelineLogger.error(DatabaseView.class, "Error closing database connection", e);
-        } finally {
-            connection = null;
-            dbPanel.getStatusLabel().setText("Nicht verbunden");
-            dbPanel.getStatusLabel().setForeground(Color.RED);
-            dbPanel.getConnectButton().setText("Verbinden");
-            dbPanel.getExecuteButton().setEnabled(false);
-            clearTables();
+        // Snapshot + sofort nullen, damit kein zweiter EDT-Aufruf doppelt schließt
+        Connection toClose = this.connection;
+        this.connection = null;
+
+        // GUI sofort updaten — User sieht "Nicht verbunden"
+        dbPanel.getStatusLabel().setText("Nicht verbunden");
+        dbPanel.getStatusLabel().setForeground(Color.RED);
+        dbPanel.getConnectButton().setText("Verbinden");
+        dbPanel.getExecuteButton().setEnabled(false);
+        clearTables();
+
+        // close() kann blockieren — niemals auf dem EDT ausführen
+        if (toClose != null) {
+            new Thread(() -> {
+                try {
+                    if (!toClose.isClosed()) {
+                        toClose.close();
+                        TimelineLogger.info(DatabaseView.class, "Database connection closed");
+                    }
+                } catch (SQLException e) {
+                    TimelineLogger.error(DatabaseView.class, "Error closing database connection", e);
+                }
+            }, "db-close").start();
         }
     }
 
     // ===== Table Tree Logic =====
 
+    /**
+     * Lädt Tabellen und Views via JDBC. Muss im Background-Thread laufen
+     * (JDBC-Metadaten-Aufrufe blockieren — niemals auf dem EDT).
+     * Tree-Mutationen werden anschließend auf den EDT dispatcht.
+     */
     private void loadTables() {
-        DefaultMutableTreeNode root = dbPanel.getTableRootNode();
-        root.removeAllChildren();
-        root.setUserObject("Datenbank");
-
+        Connection conn = this.connection;
+        if (conn == null) {
+            return;
+        }
         try {
-            DatabaseMetaData meta = connection.getMetaData();
-            String catalog = connection.getCatalog();
-            String schema = connection.getSchema();
+            DatabaseMetaData meta = conn.getMetaData();
+            String catalog = conn.getCatalog();
+            String schema = conn.getSchema();
 
-            // Create nodes for different table types
-            DefaultMutableTreeNode tablesNode = new DefaultMutableTreeNode("Tabellen");
-            DefaultMutableTreeNode viewsNode = new DefaultMutableTreeNode("Views");
-
-            // Load tables
+            // JDBC-Phase: nur Datensammlung, keine Tree-Mutation
+            List<String> tableNames = new ArrayList<>();
             try (ResultSet rs = meta.getTables(catalog, schema, "%", new String[]{"TABLE"})) {
                 while (rs.next()) {
-                    String tableName = rs.getString("TABLE_NAME");
+                    tableNames.add(rs.getString("TABLE_NAME"));
+                }
+            }
+
+            List<String> viewNames = new ArrayList<>();
+            try (ResultSet rs = meta.getTables(catalog, schema, "%", new String[]{"VIEW"})) {
+                while (rs.next()) {
+                    viewNames.add(rs.getString("TABLE_NAME"));
+                }
+            }
+
+            // Tree-Mutationen auf EDT
+            SwingUtilities.invokeLater(() -> {
+                DefaultMutableTreeNode root = dbPanel.getTableRootNode();
+                root.removeAllChildren();
+                root.setUserObject("Datenbank");
+
+                DefaultMutableTreeNode tablesNode = new DefaultMutableTreeNode("Tabellen");
+                for (String tableName : tableNames) {
                     DefaultMutableTreeNode tableNode = new DefaultMutableTreeNode(tableName);
-                    // Add dummy node for lazy loading of columns
                     tableNode.add(new DefaultMutableTreeNode(LOADING_NODE));
                     tablesNode.add(tableNode);
                 }
-            }
-
-            // Load views
-            try (ResultSet rs = meta.getTables(catalog, schema, "%", new String[]{"VIEW"})) {
-                while (rs.next()) {
-                    String viewName = rs.getString("TABLE_NAME");
+                DefaultMutableTreeNode viewsNode = new DefaultMutableTreeNode("Views");
+                for (String viewName : viewNames) {
                     DefaultMutableTreeNode viewNode = new DefaultMutableTreeNode(viewName);
-                    // Add dummy node for lazy loading of columns
                     viewNode.add(new DefaultMutableTreeNode(LOADING_NODE));
                     viewsNode.add(viewNode);
                 }
-            }
 
-            // Only add nodes if they have children
-            if (tablesNode.getChildCount() > 0) {
-                root.add(tablesNode);
-            }
-            if (viewsNode.getChildCount() > 0) {
-                root.add(viewsNode);
-            }
+                if (tablesNode.getChildCount() > 0) root.add(tablesNode);
+                if (viewsNode.getChildCount() > 0) root.add(viewsNode);
 
-            dbPanel.getTableTreeModel().reload();
-            expandTableTree();
+                dbPanel.getTableTreeModel().reload();
+                expandTableTree();
 
-            TimelineLogger.info(DatabaseView.class, "Loaded {} tables and {} views",
-                    tablesNode.getChildCount(), viewsNode.getChildCount());
+                TimelineLogger.info(DatabaseView.class, "Loaded {} tables and {} views",
+                        tablesNode.getChildCount(), viewsNode.getChildCount());
+            });
 
         } catch (SQLException e) {
             TimelineLogger.error(DatabaseView.class, "Failed to load tables", e);
-            root.add(new DefaultMutableTreeNode("Fehler: " + e.getMessage()));
-            dbPanel.getTableTreeModel().reload();
+            SwingUtilities.invokeLater(() -> {
+                DefaultMutableTreeNode root = dbPanel.getTableRootNode();
+                root.removeAllChildren();
+                root.setUserObject("Datenbank");
+                root.add(new DefaultMutableTreeNode("Fehler: " + e.getMessage()));
+                dbPanel.getTableTreeModel().reload();
+            });
         }
     }
 
@@ -410,68 +440,79 @@ public class DatabaseView extends BaseView implements ConnectionManager.Connecti
 
     /**
      * Loads column information for a table or view.
+     * Wird aus treeWillExpand (EDT) aufgerufen — JDBC läuft im
+     * Background-Worker, Tree-Mutation danach wieder auf dem EDT.
      */
     private void loadColumns(DefaultMutableTreeNode tableNode, String tableName) {
-        if (connection == null) {
+        Connection conn = this.connection;
+        if (conn == null) {
             return;
         }
 
-        try {
-            DatabaseMetaData meta = connection.getMetaData();
-            String catalog = connection.getCatalog();
-            String schema = connection.getSchema();
+        executeTask(() -> {
+            try {
+                DatabaseMetaData meta = conn.getMetaData();
+                String catalog = conn.getCatalog();
+                String schema = conn.getSchema();
 
-            // Remove dummy node
-            tableNode.removeAllChildren();
+                // JDBC-Phase: nur Datensammlung
+                List<String> columnInfos = new ArrayList<>();
+                try (ResultSet rs = meta.getColumns(catalog, schema, tableName, "%")) {
+                    while (rs.next()) {
+                        String columnName = rs.getString("COLUMN_NAME");
+                        String typeName = rs.getString("TYPE_NAME");
+                        int columnSize = rs.getInt("COLUMN_SIZE");
+                        int nullable = rs.getInt("NULLABLE");
 
-            // Load columns
-            try (ResultSet rs = meta.getColumns(catalog, schema, tableName, "%")) {
-                while (rs.next()) {
-                    String columnName = rs.getString("COLUMN_NAME");
-                    String typeName = rs.getString("TYPE_NAME");
-                    int columnSize = rs.getInt("COLUMN_SIZE");
-                    int nullable = rs.getInt("NULLABLE");
-
-                    // Format: column_name (TYPE, size) or column_name (TYPE, size, NULL)
-                    StringBuilder columnInfo = new StringBuilder();
-                    columnInfo.append(columnName).append(" (").append(typeName);
-                    if (columnSize > 0) {
-                        columnInfo.append(", ").append(columnSize);
+                        StringBuilder columnInfo = new StringBuilder();
+                        columnInfo.append(columnName).append(" (").append(typeName);
+                        if (columnSize > 0) {
+                            columnInfo.append(", ").append(columnSize);
+                        }
+                        if (nullable == DatabaseMetaData.columnNullable) {
+                            columnInfo.append(", NULL");
+                        }
+                        columnInfo.append(")");
+                        columnInfos.add(columnInfo.toString());
                     }
-                    if (nullable == DatabaseMetaData.columnNullable) {
-                        columnInfo.append(", NULL");
-                    }
-                    columnInfo.append(")");
-
-                    tableNode.add(new DefaultMutableTreeNode(columnInfo.toString()));
                 }
-            }
 
-            // Load primary keys and mark them
-            try (ResultSet rs = meta.getPrimaryKeys(catalog, schema, tableName)) {
-                while (rs.next()) {
-                    String pkColumn = rs.getString("COLUMN_NAME");
-                    // Find and update the column node with PK marker
-                    for (int i = 0; i < tableNode.getChildCount(); i++) {
-                        DefaultMutableTreeNode colNode = (DefaultMutableTreeNode) tableNode.getChildAt(i);
-                        String colInfo = colNode.toString();
-                        if (colInfo.startsWith(pkColumn + " ")) {
-                            colNode.setUserObject("🔑 " + colInfo);
-                            break;
+                List<String> pkColumns = new ArrayList<>();
+                try (ResultSet rs = meta.getPrimaryKeys(catalog, schema, tableName)) {
+                    while (rs.next()) {
+                        pkColumns.add(rs.getString("COLUMN_NAME"));
+                    }
+                }
+
+                // Tree-Mutation auf EDT
+                SwingUtilities.invokeLater(() -> {
+                    tableNode.removeAllChildren();
+                    for (String info : columnInfos) {
+                        tableNode.add(new DefaultMutableTreeNode(info));
+                    }
+                    for (String pkColumn : pkColumns) {
+                        for (int i = 0; i < tableNode.getChildCount(); i++) {
+                            DefaultMutableTreeNode colNode = (DefaultMutableTreeNode) tableNode.getChildAt(i);
+                            String colInfo = colNode.toString();
+                            if (colInfo.startsWith(pkColumn + " ")) {
+                                colNode.setUserObject("🔑 " + colInfo);
+                                break;
+                            }
                         }
                     }
-                }
+                    dbPanel.getTableTreeModel().nodeStructureChanged(tableNode);
+                    TimelineLogger.debug(DatabaseView.class, "Loaded {} columns for table {}", tableNode.getChildCount(), tableName);
+                });
+
+            } catch (SQLException e) {
+                TimelineLogger.error(DatabaseView.class, "Failed to load columns for table: {}", tableName, e);
+                SwingUtilities.invokeLater(() -> {
+                    tableNode.removeAllChildren();
+                    tableNode.add(new DefaultMutableTreeNode("Fehler: " + e.getMessage()));
+                    dbPanel.getTableTreeModel().nodeStructureChanged(tableNode);
+                });
             }
-
-            dbPanel.getTableTreeModel().nodeStructureChanged(tableNode);
-            TimelineLogger.debug(DatabaseView.class, "Loaded {} columns for table {}", tableNode.getChildCount(), tableName);
-
-        } catch (SQLException e) {
-            TimelineLogger.error(DatabaseView.class, "Failed to load columns for table: {}", tableName, e);
-            tableNode.removeAllChildren();
-            tableNode.add(new DefaultMutableTreeNode("Fehler: " + e.getMessage()));
-            dbPanel.getTableTreeModel().nodeStructureChanged(tableNode);
-        }
+        });
     }
 
     private void onTableSelected() {
