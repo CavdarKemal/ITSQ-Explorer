@@ -49,7 +49,11 @@ public class AB30MapperUtil {
                 TimelineLogger.info(this.getClass(), strInfoPrefix + " extendAb30CrefoPropertiesWithOldAttributes():: AB30XMLProperties " + oldAb30XMLProperties + " aus altem 'TestCrefos.properties' - Datei ist nicht mehr im Testpaket!");
                 File xmlToRename = new File(testCrefosFile.getParentFile(), oldAb30XMLProperties.getCrefoNr() + ".xml");
                 if (xmlToRename.exists()) {
-                    xmlToRename.renameTo(new File(xmlToRename.getParentFile(), xmlToRename.getName() + ".deleted"));
+                    File deletedFile = new File(xmlToRename.getParentFile(), xmlToRename.getName() + ".deleted");
+                    if (!xmlToRename.renameTo(deletedFile)) {
+                        TimelineLogger.error(this.getClass(),
+                                "Konnte Datei nicht umbenennen: {} → {}", xmlToRename, deletedFile);
+                    }
                 }
             }
         }
@@ -156,8 +160,13 @@ public class AB30MapperUtil {
 
     public void writeAb30CrefoToPropertiesMapToFile(File newPorpsFile, Map<Long, AB30XMLProperties> ab30CrefoToPropertiesMap) throws IOException {
         if (newPorpsFile.exists()) {
-            newPorpsFile.renameTo(new File(newPorpsFile.getParentFile(), TestSupportClientKonstanten.EXTENDED_CREFOS_PROPS_FILENAME + ".old"));
-            newPorpsFile.delete();
+            File backupFile = new File(newPorpsFile.getParentFile(), newPorpsFile.getName() + ".old");
+            if (backupFile.exists() && !backupFile.delete()) {
+                throw new IOException("Backup-Datei konnte nicht gelöscht werden: " + backupFile);
+            }
+            if (!newPorpsFile.renameTo(backupFile)) {
+                throw new IOException("Datei konnte nicht in Backup verschoben werden: " + newPorpsFile + " → " + backupFile);
+            }
         }
         List<String> strLines = new ArrayList<>();
         strLines.add(AB30XMLProperties.HEADER);

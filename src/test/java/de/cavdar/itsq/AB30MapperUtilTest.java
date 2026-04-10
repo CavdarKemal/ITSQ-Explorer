@@ -123,6 +123,28 @@ class AB30MapperUtilTest {
         assertThat(Files.readString(oldFile.toPath())).isEqualTo("OLD CONTENT");
     }
 
+    @Test
+    @DisplayName("writeAb30CrefoToPropertiesMapToFile – Backup-Logik schützt vor Datenverlust")
+    void writeAb30CrefoToPropertiesMapToFile_existingFileBackedUp() throws IOException {
+        File outputFile = tempDir.resolve("TestCrefosExtended.properties").toFile();
+        Files.writeString(outputFile.toPath(), "OLD CONTENT");
+
+        Map<Long, AB30XMLProperties> map = new HashMap<>();
+        AB30XMLProperties props = new AB30XMLProperties(5001L);
+        map.put(5001L, props);
+
+        util.writeAb30CrefoToPropertiesMapToFile(outputFile, map);
+
+        // Neue Datei muss existieren
+        assertThat(outputFile).exists();
+        assertThat(Files.readString(outputFile.toPath())).doesNotContain("OLD CONTENT");
+
+        // Backup muss existieren mit altem Inhalt
+        File backupFile = new File(tempDir.toFile(), "TestCrefosExtended.properties.old");
+        assertThat(backupFile).exists();
+        assertThat(Files.readString(backupFile.toPath())).isEqualTo("OLD CONTENT");
+    }
+
     // ── Helpers ──────────────────────────────────────────────
 
     private AB30XMLProperties propertiesFor(Long crefoNr, String... customerKeys) {
