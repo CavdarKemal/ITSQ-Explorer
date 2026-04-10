@@ -22,8 +22,6 @@ import java.util.function.Supplier;
  * - View toolbar: View buttons
  * - Main area: DesktopPanel with MDI internal frames
  *
- * @author TemplateGUI
- * @version 3.0
  */
 public class MainFrame extends JFrame implements ConnectionManager.ConnectionListener {
 
@@ -36,14 +34,6 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
     // Config toolbar components
     private JComboBox<String> configComboBox;
     private JComboBox<String> cbDbConnections;
-/*
-    private JCheckBox chkDump;
-    private JCheckBox chkSftpUpload;
-    private JCheckBox chkExportProtokoll;
-    private JCheckBox chkUploadSynthetics;
-    private JCheckBox chkOnlyTestClz;
-*/
-
     private File configDirectory;
     private String currentConfigName;
     private boolean isReloading = false;
@@ -53,9 +43,6 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
     private final List<ViewRegistration> registeredViews = new ArrayList<>();
     private final Map<String, JMenu> groupMenus = new LinkedHashMap<>();
 
-    /**
-     * Holds registration info for a view type.
-     */
     private record ViewRegistration(
             Supplier<BaseView> supplier,
             String menuLabel,
@@ -64,12 +51,8 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
             KeyStroke shortcut,
             String tooltip,
             String menuGroup
-    ) {
-    }
+    ) {}
 
-    /**
-     * Constructs the main MDI frame with toolbar-based layout.
-     */
     public MainFrame() {
         setTitle("MDI Application - " + cfg.getProperty("TEST-BASE-PATH"));
         initWindow();
@@ -105,9 +88,6 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
         TimelineLogger.info(MainFrame.class, "MainFrame initialized with dual-toolbar layout");
     }
 
-    /**
-     * Creates the configuration toolbar with all settings.
-     */
     private JToolBar createConfigToolbar() {
         JToolBar toolbar = new JToolBar("Config");
         toolbar.setFloatable(false);
@@ -145,21 +125,10 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
 
         toolbar.addSeparator();
 
-        // === Checkboxes ===
-/*
-        chkDump = createToolbarCheckBox(toolbar, "Dump", "DUMP_IN_REST_CLIENT");
-        chkSftpUpload = createToolbarCheckBox(toolbar, "SFTP", "SFTP_UPLOAD_ACTIVE");
-        chkExportProtokoll = createToolbarCheckBox(toolbar, "Export", "CHECK-EXPORT-PROTOKOLL-ACTIVE");
-        chkUploadSynthetics = createToolbarCheckBox(toolbar, "Synth", "LAST_UPLOAD_SYNTHETICS");
-        chkOnlyTestClz = createToolbarCheckBox(toolbar, "TestClz", "LAST_USE_ONLY_TEST_CLZ");
-*/
         toolbar.addSeparator();
         return toolbar;
     }
 
-    /**
-     * Initializes the config selector in the toolbar.
-     */
     private void initConfigSelector(JToolBar toolbar) {
         // Determine config directory
         File dockerConfigDir = new File("/app/config");
@@ -186,7 +155,6 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
             // Environment is locked - try to find an unlocked one
             String envName = currentConfigName.length() >= 3 ? currentConfigName.substring(0, 3).toUpperCase() : currentConfigName;
             boolean foundAlternative = false;
-
             // Try other configs
             for (int i = 0; i < configComboBox.getItemCount(); i++) {
                 String altConfig = configComboBox.getItemAt(i);
@@ -206,7 +174,6 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
                     }
                 }
             }
-
             if (!foundAlternative) {
                 JOptionPane.showMessageDialog(this,
                         "Alle Umgebungen sind bereits von anderen Instanzen gesperrt.\n" +
@@ -234,26 +201,8 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
         toolbar.add(refreshBtn);
     }
 
-/*
-    private JCheckBox createToolbarCheckBox(JToolBar toolbar, String label, String propertyKey) {
-        JCheckBox cb = new JCheckBox(label, cfg.getBool(propertyKey));
-        cb.setToolTipText(propertyKey);
-        cb.addActionListener(e -> {
-            if (isReloading) return;
-            cfg.setProperty(propertyKey, String.valueOf(cb.isSelected()));
-            cfg.save();
-        });
-        toolbar.add(cb);
-        return cb;
-    }
-*/
-
-    /**
-     * Registers a view type for menu and optional toolbar access.
-     */
     public void registerView(Supplier<BaseView> viewSupplier) {
         BaseView tempView = viewSupplier.get();
-
         ViewRegistration reg = new ViewRegistration(
                 viewSupplier,
                 tempView.getMenuLabel(),
@@ -263,16 +212,12 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
                 tempView.getToolbarTooltip(),
                 tempView.getMenuGroup()
         );
-
         tempView.dispose();
         registeredViews.add(reg);
-
         addViewToMenu(reg);
-
         if (reg.toolbarLabel() != null) {
             addViewToToolbar(reg);
         }
-
         TimelineLogger.info(MainFrame.class, "Registered view: {}", reg.menuLabel());
     }
 
@@ -327,14 +272,11 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
         } catch (Exception e) {
             TimelineLogger.warn(MainFrame.class, "Could not set Look and Feel, using default", e);
         }
-
         int w = cfg.getInt("LAST_WINDOW_WIDTH", 1200);
         int h = cfg.getInt("LAST_WINDOW_HEIGHT", 800);
         int x = cfg.getInt("LAST_WINDOW_X_POS", 100);
         int y = cfg.getInt("LAST_WINDOW_Y_POS", 100);
-
         Rectangle validBounds = validateWindowBounds(x, y, w, h);
-
         setBounds(validBounds);
         setResizable(true);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -343,22 +285,18 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
     private Rectangle validateWindowBounds(int x, int y, int width, int height) {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         Rectangle virtualBounds = new Rectangle();
-
         for (GraphicsDevice gd : ge.getScreenDevices()) {
             for (GraphicsConfiguration gc : gd.getConfigurations()) {
                 virtualBounds = virtualBounds.union(gc.getBounds());
             }
         }
-
         width = Math.max(width, 400);
         height = Math.max(height, 300);
-
         Rectangle windowBounds = new Rectangle(x, y, width, height);
         if (!virtualBounds.intersects(windowBounds)) {
             x = 100;
             y = 100;
         }
-
         if (x < virtualBounds.x) x = virtualBounds.x;
         if (y < virtualBounds.y) y = virtualBounds.y;
         if (x + width > virtualBounds.x + virtualBounds.width) {
@@ -367,17 +305,14 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
         if (y + height > virtualBounds.y + virtualBounds.height) {
             y = Math.max(virtualBounds.y, virtualBounds.y + virtualBounds.height - height);
         }
-
         return new Rectangle(x, y, width, height);
     }
 
     private JMenuBar createMenuBar() {
         JMenuBar mb = new JMenuBar();
-
         JMenu fileMenu = new JMenu("Datei");
         fileMenu.setName("Datei");
         viewMenu = fileMenu;
-
         fileMenu.addSeparator();
         JMenuItem itemExit = new JMenuItem("Beenden");
         itemExit.setName("Beenden");
@@ -385,12 +320,9 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
             dispatchEvent(new java.awt.event.WindowEvent(this, java.awt.event.WindowEvent.WINDOW_CLOSING));
         });
         fileMenu.add(itemExit);
-
         mb.add(fileMenu);
-
         JMenu windowMenu = new JMenu("Fenster");
         windowMenu.setName("Fenster");
-
         JMenuItem itemCascade = new JMenuItem("Kaskadiert anordnen");
         itemCascade.addActionListener(e -> desktopPanel.layoutCascaded());
         windowMenu.add(itemCascade);
@@ -407,22 +339,16 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
         return mb;
     }
 
-    // === Config Management ===
-
     private void refreshConfigList() {
         String previousSelection = (String) configComboBox.getSelectedItem();
         configComboBox.removeAllItems();
-
-        File[] configFiles = configDirectory.listFiles((dir, name) ->
-                name.toLowerCase().endsWith("-config.properties"));
-
+        File[] configFiles = configDirectory.listFiles((dir, name) -> name.toLowerCase().endsWith("-config.properties"));
         if (configFiles != null) {
             java.util.Arrays.sort(configFiles, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
             for (File file : configFiles) {
                 configComboBox.addItem(file.getName());
             }
         }
-
         if (currentConfigName != null && containsItem(configComboBox, currentConfigName)) {
             configComboBox.setSelectedItem(currentConfigName);
         } else if (previousSelection != null && containsItem(configComboBox, previousSelection)) {
@@ -437,38 +363,21 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
         return false;
     }
 
-    /**
-     * Saves current UI settings to the active config file.
-     * Called before switching to a different config file.
-     */
     private void saveCurrentSettings() {
         TimelineLogger.info(MainFrame.class, "Saving current settings before config switch");
-
         // Save DB connection selection
         String dbConnection = (String) cbDbConnections.getSelectedItem();
         if (dbConnection != null) {
             ConnectionManager.setLastConnectionName(dbConnection);
         }
-
-        // Save checkbox states
-/*
-        cfg.setProperty("DUMP_IN_REST_CLIENT", String.valueOf(chkDump.isSelected()));
-        cfg.setProperty("SFTP_UPLOAD_ACTIVE", String.valueOf(chkSftpUpload.isSelected()));
-        cfg.setProperty("CHECK-EXPORT-PROTOKOLL-ACTIVE", String.valueOf(chkExportProtokoll.isSelected()));
-        cfg.setProperty("LAST_UPLOAD_SYNTHETICS", String.valueOf(chkUploadSynthetics.isSelected()));
-        cfg.setProperty("LAST_USE_ONLY_TEST_CLZ", String.valueOf(chkOnlyTestClz.isSelected()));
-*/
-
         cfg.save();
     }
 
     private void loadSelectedConfig(String configName) {
         // Save current settings to OLD config before switching
         saveCurrentSettings();
-
         File configFile = new File(configDirectory, configName);
         TimelineLogger.info(MainFrame.class, "Loading configuration: {}", configFile.getAbsolutePath());
-
         if (cfg.loadFrom(configFile.getAbsolutePath())) {
             // Switch test environment (creates directories, acquires lock, configures logging)
             if (!TestEnvironmentManager.switchEnvironment(configName)) {
@@ -483,10 +392,8 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
                 configComboBox.setSelectedItem(currentConfigName);
                 return;
             }
-
             currentConfigName = configName;
             setTitle("MDI Application - " + cfg.getProperty("TEST-BASE-PATH") + " [" + configName + "]");
-
             reloadAllSettings();
             TimelineLogger.info(MainFrame.class, "Configuration loaded: {}", configName);
         } else {
@@ -497,16 +404,12 @@ public class MainFrame extends JFrame implements ConnectionManager.ConnectionLis
         }
     }
 
-    /**
-     * Reloads all settings when config changes.
-     */
     private void reloadAllSettings() {
         TimelineLogger.info(MainFrame.class, "Reloading all settings");
         isReloading = true;
         try {
             // Reload DB connections from new config
             ConnectionManager.reloadConnections();
-
             // Explicitly reload DB connections ComboBox with value from NEW config
             if (cbDbConnections != null) {
                 cbDbConnections.removeAllItems();
