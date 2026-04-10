@@ -24,6 +24,7 @@
         <maven-dependency-plugin.version>3.6.1</maven-dependency-plugin.version>
         <maven-assembly-plugin.version>3.6.0</maven-assembly-plugin.version>
         <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
+        <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
 
         <!-- Dependency Versionen -->
         <log4j.version>1.2.12</log4j.version>
@@ -41,6 +42,13 @@
 
     <build>
         <plugins>
+            <!-- Surefire für JUnit 5 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire-plugin.version}</version>
+            </plugin>
+
             <!-- JAR mit Main-Class Manifest -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
