@@ -21,10 +21,10 @@ public class AB30MapperUtil {
 
     public Map<Long, AB30XMLProperties> extendAb30CrefoPropertiesWithOldAttributes(String strInfoPrefix, File testCrefosFile, Map<Long, AB30XMLProperties> ab30CrefoToPropertiesMap) throws IOException {
         Map<Long, AB30XMLProperties> oldAb30CrefoToPropertiesMap = initAb30CrefoPropertiesMap(testCrefosFile);
-        Iterator<Long> iterator = oldAb30CrefoToPropertiesMap.keySet().iterator();
-        while (iterator.hasNext()) {
-            Long crefoNr = iterator.next();
-            AB30XMLProperties oldAb30XMLProperties = oldAb30CrefoToPropertiesMap.get(crefoNr);
+        // entrySet() statt keySet()+get() — spart pro Iteration einen Map-Lookup
+        for (Map.Entry<Long, AB30XMLProperties> oldEntry : oldAb30CrefoToPropertiesMap.entrySet()) {
+            Long crefoNr = oldEntry.getKey();
+            AB30XMLProperties oldAb30XMLProperties = oldEntry.getValue();
             AB30XMLProperties newAb30XMLProperties = ab30CrefoToPropertiesMap.get(crefoNr);
             if (newAb30XMLProperties != null) {
                 TimelineLogger.info(this.getClass(), strInfoPrefix + " textendAb30CrefoPropertiesWithOldAttributes():: Ergänze Attributes von AB30XMLProperties '" + newAb30XMLProperties + "' aus altem 'TestCrefos.properties' - Datei...");
@@ -62,10 +62,10 @@ public class AB30MapperUtil {
 
     public Map<Long, AB30XMLProperties> extendAb30CrefoPropertiesMapWithBtlgs(String strInfoPrefix, File archivBestandsPhaseFile, Map<Long, AB30XMLProperties> ab30CrefoToPropertiesMap) throws Exception {
         Map<Long, AB30XMLProperties> ab30CrefoToPropertiesResult = new TreeMap<>(ab30CrefoToPropertiesMap);
-        Iterator<Long> iterator = ab30CrefoToPropertiesMap.keySet().iterator();
-        while (iterator.hasNext()) {
-            Long crefoNr = iterator.next();
-            AB30XMLProperties ab30XMLProperties = ab30CrefoToPropertiesMap.get(crefoNr);
+        // entrySet() statt keySet()+get() — spart pro Iteration einen Map-Lookup
+        for (Map.Entry<Long, AB30XMLProperties> mapEntry : ab30CrefoToPropertiesMap.entrySet()) {
+            Long crefoNr = mapEntry.getKey();
+            AB30XMLProperties ab30XMLProperties = mapEntry.getValue();
             if (ab30XMLProperties == null) {
                 throw new IllegalStateException("Für die Test-Crefo " + crefoNr + " existiert kein AB30XMLProperties-Eintrag in der Map!");
             }

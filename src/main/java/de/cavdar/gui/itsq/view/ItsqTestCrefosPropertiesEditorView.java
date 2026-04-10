@@ -642,15 +642,37 @@ public class ItsqTestCrefosPropertiesEditorView extends ItsqTestCrefosProperties
 
         private void applyFilter() {
             filteredEntries.clear();
-            for (AB30XMLProperties entry : allEntries) {
-                if (filterText.isEmpty() ||
-                        (entry.getCrefoNr() != null && entry.getCrefoNr().toString().contains(filterText)) ||
-                        (entry.getAuftragClz() != null && entry.getAuftragClz().toString().contains(filterText)) ||
-                        entry.getUsedByCustomersList().stream().anyMatch(c -> c.toLowerCase().contains(filterText))) {
-                    filteredEntries.add(entry);
+            // Empty-Filter Sonderfall einmalig oben behandeln, statt
+            // pro Row erneut filterText.isEmpty() zu prüfen
+            if (filterText.isEmpty()) {
+                filteredEntries.addAll(allEntries);
+            } else {
+                for (AB30XMLProperties entry : allEntries) {
+                    if (entryMatchesFilter(entry, filterText)) {
+                        filteredEntries.add(entry);
+                    }
                 }
             }
             fireTableDataChanged();
+        }
+
+        private boolean entryMatchesFilter(AB30XMLProperties entry, String f) {
+            Long crefo = entry.getCrefoNr();
+            if (crefo != null && Long.toString(crefo).contains(f)) {
+                return true;
+            }
+            Long clz = entry.getAuftragClz();
+            if (clz != null && Long.toString(clz).contains(f)) {
+                return true;
+            }
+            // Plain Loop statt Stream — Stream-Overhead lohnt sich für
+            // typische Customer-Listen (wenige Einträge) nicht
+            for (String c : entry.getUsedByCustomersList()) {
+                if (c.toLowerCase().contains(f)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public void addEntry(AB30XMLProperties entry) {

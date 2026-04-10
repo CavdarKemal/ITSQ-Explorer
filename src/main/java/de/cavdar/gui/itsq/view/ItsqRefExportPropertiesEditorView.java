@@ -794,15 +794,29 @@ public class ItsqRefExportPropertiesEditorView extends ItsqRefExportPropertiesEd
 
         private void applyFilter() {
             filteredEntries.clear();
-            for (TestCrefo entry : allEntries) {
-                if (filterText.isEmpty() ||
-                        (entry.getTestFallName() != null && entry.getTestFallName().toLowerCase().contains(filterText)) ||
-                        (entry.getItsqTestCrefoNr() != null && entry.getItsqTestCrefoNr().toString().contains(filterText)) ||
-                        (entry.getTestFallInfo() != null && entry.getTestFallInfo().toLowerCase().contains(filterText))) {
-                    filteredEntries.add(entry);
+            if (filterText.isEmpty()) {
+                filteredEntries.addAll(allEntries);
+            } else {
+                for (TestCrefo entry : allEntries) {
+                    if (entryMatchesFilter(entry, filterText)) {
+                        filteredEntries.add(entry);
+                    }
                 }
             }
             fireTableDataChanged();
+        }
+
+        private boolean entryMatchesFilter(TestCrefo entry, String f) {
+            String name = entry.getTestFallName();
+            if (name != null && name.toLowerCase().contains(f)) {
+                return true;
+            }
+            Long itsqNr = entry.getItsqTestCrefoNr();
+            if (itsqNr != null && Long.toString(itsqNr).contains(f)) {
+                return true;
+            }
+            String info = entry.getTestFallInfo();
+            return info != null && info.toLowerCase().contains(f);
         }
 
         public void addEntry(TestCrefo entry) {

@@ -518,11 +518,14 @@ public class ItsqOptionsEditorView extends ItsqOptionsEditorPanel implements Its
 
         private void applyFilter() {
             filteredEntries.clear();
-            for (OptionEntry entry : allEntries) {
-                if (filterText.isEmpty() ||
-                        entry.name.toLowerCase().contains(filterText) ||
-                        entry.value.toLowerCase().contains(filterText)) {
-                    filteredEntries.add(entry);
+            if (filterText.isEmpty()) {
+                filteredEntries.addAll(allEntries);
+            } else {
+                for (OptionEntry entry : allEntries) {
+                    if (entry.name.toLowerCase().contains(filterText)
+                            || entry.value.toLowerCase().contains(filterText)) {
+                        filteredEntries.add(entry);
+                    }
                 }
             }
             fireTableDataChanged();
