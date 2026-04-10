@@ -127,26 +127,29 @@ public class AB30MapperUtil {
 
     public void writeCrefoToCustomerMappingFile(File newFile, Map<Long, AB30XMLProperties> ab30CrefoToPropertiesMap) throws IOException {
         if (newFile.exists()) {
-            newFile.renameTo(new File(newFile.getParentFile(), newFile.getName() + ".old"));
-            newFile.delete();
+            File backupFile = new File(newFile.getParentFile(), newFile.getName() + ".old");
+            if (backupFile.exists() && !backupFile.delete()) {
+                throw new IOException("Backup-Datei konnte nicht gelöscht werden: " + backupFile);
+            }
+            if (!newFile.renameTo(backupFile)) {
+                throw new IOException("Datei konnte nicht in Backup verschoben werden: " + newFile + " → " + backupFile);
+            }
         }
         Map<String, List<Long>> customerToCrefoListMap = new HashMap<>();
-        for (Long creoNummer : ab30CrefoToPropertiesMap.keySet()) {
-            AB30XMLProperties ab30XMLProperties = ab30CrefoToPropertiesMap.get(creoNummer);
+        for (Map.Entry<Long, AB30XMLProperties> entry : ab30CrefoToPropertiesMap.entrySet()) {
+            Long creoNummer = entry.getKey();
+            AB30XMLProperties ab30XMLProperties = entry.getValue();
             List<String> customersList = ab30XMLProperties.getUsedByCustomersList();
-            customersList.stream().forEach(customerKey -> {
-                if (customerToCrefoListMap.containsKey(customerKey)) {
-                    customerToCrefoListMap.get(customerKey).add(creoNummer);
-                } else {
-                    customerToCrefoListMap.put(customerKey, new ArrayList<>());
-                }
-            });
+            for (String customerKey : customersList) {
+                customerToCrefoListMap
+                        .computeIfAbsent(customerKey, k -> new ArrayList<>())
+                        .add(creoNummer);
+            }
         }
         List<String> strLines = new ArrayList<>();
-        for (String customerKey : customerToCrefoListMap.keySet()) {
-            strLines.add(customerKey);
-            List<Long> crefosList = customerToCrefoListMap.get(customerKey);
-            strLines.add("\t" + crefosList);
+        for (Map.Entry<String, List<Long>> entry : customerToCrefoListMap.entrySet()) {
+            strLines.add(entry.getKey());
+            strLines.add("\t" + entry.getValue());
         }
         FileUtils.writeLines(newFile, strLines);
     }
