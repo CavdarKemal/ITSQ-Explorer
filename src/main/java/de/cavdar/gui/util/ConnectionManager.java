@@ -5,6 +5,8 @@ import de.cavdar.gui.model.base.ConnectionInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Manages database connections - loading, saving, and providing access to stored connections.
@@ -20,7 +22,9 @@ public final class ConnectionManager {
     private static final String CONNECTION_SEPARATOR = ";;";
 
     private static final List<ConnectionInfo> connections = new ArrayList<>();
-    private static final List<ConnectionListener> listeners = new ArrayList<>();
+    /** Thread-safe listener list — verhindert ConcurrentModificationException
+     *  bei parallelem add/remove während notify. */
+    private static final List<ConnectionListener> listeners = new CopyOnWriteArrayList<>();
     private static boolean loaded = false;
 
     private ConnectionManager() {
@@ -40,9 +44,8 @@ public final class ConnectionManager {
      * @param listener the listener to add
      */
     public static void addListener(ConnectionListener listener) {
-        if (!listeners.contains(listener)) {
-            listeners.add(listener);
-        }
+        // addIfAbsent ist atomar — verhindert check-then-act Race
+        ((CopyOnWriteArrayList<ConnectionListener>) listeners).addIfAbsent(listener);
     }
 
     /**
@@ -143,15 +146,26 @@ public final class ConnectionManager {
      *
      * @param name the connection name
      * @return the connection, or null if not found
+     * @deprecated use {@link #findConnection(String)} returning Optional
      */
+    @Deprecated
     public static synchronized ConnectionInfo getConnection(String name) {
+        return findConnection(name).orElse(null);
+    }
+
+    /**
+     * Finds a connection by name.
+     *
+     * @param name the connection name
+     * @return Optional with connection, empty if not found
+     */
+    public static synchronized Optional<ConnectionInfo> findConnection(String name) {
         if (!loaded) {
             loadConnections();
         }
         return connections.stream()
                 .filter(c -> c.getName().equals(name))
-                .findFirst()
-                .orElse(null);
+                .findFirst();
     }
 
     /**
