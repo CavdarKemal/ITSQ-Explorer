@@ -1,6 +1,7 @@
 package de.cavdar.itsq.migration.model;
 
 import java.io.File;
+import java.util.Objects;
 
 /**
  * Konfiguration fuer die ITSQ-Migration von OLD nach NEW Struktur.
@@ -105,6 +106,22 @@ public class MigrationConfig {
     public boolean isValid() {
         return sourceOldPath != null && sourceOldPath.exists() && sourceOldPath.isDirectory()
                 && targetNewPath != null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof MigrationConfig other)) return false;
+        return createBackup == other.createBackup
+                && overwriteExisting == other.overwriteExisting
+                && dryRun == other.dryRun
+                && Objects.equals(sourceOldPath, other.sourceOldPath)
+                && Objects.equals(targetNewPath, other.targetNewPath);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(sourceOldPath, targetNewPath, createBackup, overwriteExisting, dryRun);
     }
 
     @Override

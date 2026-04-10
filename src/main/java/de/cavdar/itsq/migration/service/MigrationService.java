@@ -124,8 +124,10 @@ public class MigrationService {
      * Fuehrt die Migration basierend auf den Analyseergebnissen aus.
      */
     public MigrationResult migrate(MigrationConfig config) throws IOException {
-        // Fuehre zuerst Analyse durch falls noch nicht geschehen
-        if (result == null || analyzer == null) {
+        // Analyse neu ausführen wenn:
+        // - noch keine Analyse durchgeführt
+        // - die letzte Analyse war für eine andere Konfiguration (stale state)
+        if (result == null || analyzer == null || !config.equals(this.config)) {
             analyze(config);
         }
 
