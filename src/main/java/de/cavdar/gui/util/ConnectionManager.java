@@ -91,9 +91,15 @@ public final class ConnectionManager {
      * Forces a reload of connections from the current configuration.
      * Use this after loading a different config file.
      */
-    public static synchronized void reloadConnections() {
-        loaded = false;
-        loadConnections();
+    public static void reloadConnections() {
+        synchronized (ConnectionManager.class) {
+            loaded = false;
+            loadConnections();
+        }
+        // notifyListeners außerhalb des Sync-Blocks aufrufen — ein Listener,
+        // der z.B. EDT-Code triggert oder zurück in ConnectionManager ruft,
+        // hält damit nicht den ConnectionManager-Monitor und kann keinen
+        // Lock-Ordering-Deadlock mit dem EDT erzeugen.
         notifyListeners();
         TimelineLogger.info(ConnectionManager.class, "Connections reloaded from configuration");
     }
@@ -101,7 +107,16 @@ public final class ConnectionManager {
     /**
      * Saves all connections to configuration.
      */
-    public static synchronized void saveConnections() {
+    public static void saveConnections() {
+        synchronized (ConnectionManager.class) {
+            saveConnectionsLocked();
+        }
+        // siehe reloadConnections(): notify außerhalb des Sync-Blocks
+        notifyListeners();
+    }
+
+    /** Persistiert connections nach AppConfig — Aufrufer hält den Monitor. */
+    private static void saveConnectionsLocked() {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < connections.size(); i++) {
             if (i > 0) sb.append(CONNECTION_SEPARATOR);
@@ -112,7 +127,6 @@ public final class ConnectionManager {
         cfg.setProperty(CONNECTIONS_KEY, sb.toString());
         cfg.save();
         TimelineLogger.debug(ConnectionManager.class, "Saved {} database connections", connections.size());
-        notifyListeners();
     }
 
     /**
@@ -173,15 +187,17 @@ public final class ConnectionManager {
      *
      * @param conn the connection to save
      */
-    public static synchronized void saveConnection(ConnectionInfo conn) {
-        if (!loaded) {
-            loadConnections();
+    public static void saveConnection(ConnectionInfo conn) {
+        synchronized (ConnectionManager.class) {
+            if (!loaded) {
+                loadConnections();
+            }
+            // Remove existing with same name
+            connections.removeIf(c -> c.getName().equals(conn.getName()));
+            connections.add(conn);
+            saveConnectionsLocked();
         }
-
-        // Remove existing with same name
-        connections.removeIf(c -> c.getName().equals(conn.getName()));
-        connections.add(conn);
-        saveConnections();
+        notifyListeners();
         TimelineLogger.info(ConnectionManager.class, "Saved connection: {}", conn.getName());
     }
 
@@ -191,14 +207,19 @@ public final class ConnectionManager {
      * @param name the connection name to delete
      * @return true if deleted, false if not found
      */
-    public static synchronized boolean deleteConnection(String name) {
-        if (!loaded) {
-            loadConnections();
+    public static boolean deleteConnection(String name) {
+        boolean removed;
+        synchronized (ConnectionManager.class) {
+            if (!loaded) {
+                loadConnections();
+            }
+            removed = connections.removeIf(c -> c.getName().equals(name));
+            if (removed) {
+                saveConnectionsLocked();
+            }
         }
-
-        boolean removed = connections.removeIf(c -> c.getName().equals(name));
         if (removed) {
-            saveConnections();
+            notifyListeners();
             TimelineLogger.info(ConnectionManager.class, "Deleted connection: {}", name);
         }
         return removed;
