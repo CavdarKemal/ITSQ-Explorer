@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class TestCustomer {
     private String customerName;
@@ -75,6 +76,18 @@ public class TestCustomer {
     public List<TestScenario> getTestScenariosList() {
         List<TestScenario> theList = new ArrayList<>(testScenariosMap.values());
         return theList;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof TestCustomer other)) return false;
+        return Objects.equals(customerKey, other.customerKey);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(customerKey);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package de.cavdar.itsq;
 
 import java.io.File;
+import java.util.Objects;
 
 public class TestCrefo {
     private String testFallName;
@@ -83,6 +84,19 @@ public class TestCrefo {
 
     public void setItsqRexExportXmlFile(File itsqRexExportXmlFile) {
         this.itsqRexExportXmlFile = itsqRexExportXmlFile;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof TestCrefo other)) return false;
+        return Objects.equals(testFallName, other.testFallName)
+                && Objects.equals(itsqTestCrefoNr, other.itsqTestCrefoNr);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(testFallName, itsqTestCrefoNr);
     }
 
     @Override
