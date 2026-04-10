@@ -76,6 +76,13 @@ public class TimelineLogger {
 
     // ===== Timeline Action Tracking =====
     private static final Map<String, ActionInfo> activeActions = new ConcurrentHashMap<>();
+    /**
+     * Lock zum Schutz von timelineAppender und appAppender. configure() und
+     * close() mutieren diese Felder; ohne Synchronisation könnten parallele
+     * Aufrufe (z.B. switchEnvironment + Shutdown-Hook) die Appender doppelt
+     * schließen oder einen halb-konfigurierten Zustand sichtbar machen.
+     */
+    private static final Object APPENDER_LOCK = new Object();
     private static RollingFileAppender timelineAppender;
     private static RollingFileAppender appAppender;
     private static long actionCounter = 0;
@@ -181,40 +188,42 @@ public class TimelineLogger {
      * @return true if configuration was successful
      */
     public static boolean configure(File logOutputDir, String appLogFileName, String actionLogFileName) {
-        try {
-            // Ensure directory exists
-            if (!logOutputDir.exists() && !logOutputDir.mkdirs()) {
-                System.err.println("[TimelineLogger] Could not create log directory: " + logOutputDir.getAbsolutePath());
+        synchronized (APPENDER_LOCK) {
+            try {
+                // Ensure directory exists
+                if (!logOutputDir.exists() && !logOutputDir.mkdirs()) {
+                    System.err.println("[TimelineLogger] Could not create log directory: " + logOutputDir.getAbsolutePath());
+                    return false;
+                }
+
+                File appLogFile = new File(logOutputDir, appLogFileName);
+                File actionLogFile = new File(logOutputDir, actionLogFileName);
+
+                // Rotate existing log files
+                rotateExistingLogFile(appLogFile);
+                rotateExistingLogFile(actionLogFile);
+
+                // Configure application logger (only for de.cavdar.* packages)
+                appAppender = configureAppender(appAppender, APP_APPENDER_NAME, APP_PATTERN, appLogFile, true);
+                if (appAppender == null) return false;
+                org.apache.log4j.Logger appPackageLogger = org.apache.log4j.Logger.getLogger(APP_PACKAGE);
+                appPackageLogger.setAdditivity(false);  // Don't propagate to root logger
+                if (!appPackageLogger.isAttached(appAppender)) {
+                    appPackageLogger.addAppender(appAppender);
+                }
+
+                // Configure timeline logger
+                timelineAppender = configureAppender(timelineAppender, TIMELINE_APPENDER_NAME, TIMELINE_PATTERN, actionLogFile, false);
+                if (timelineAppender == null) return false;
+                if (!LOG4J_TIMELINE.isAttached(timelineAppender)) {
+                    LOG4J_TIMELINE.addAppender(timelineAppender);
+                }
+
+                return true;
+            } catch (Exception e) {
+                System.err.println("[TimelineLogger] Error configuring: " + e.getMessage());
                 return false;
             }
-
-            File appLogFile = new File(logOutputDir, appLogFileName);
-            File actionLogFile = new File(logOutputDir, actionLogFileName);
-
-            // Rotate existing log files
-            rotateExistingLogFile(appLogFile);
-            rotateExistingLogFile(actionLogFile);
-
-            // Configure application logger (only for de.cavdar.* packages)
-            appAppender = configureAppender(appAppender, APP_APPENDER_NAME, APP_PATTERN, appLogFile, true);
-            if (appAppender == null) return false;
-            org.apache.log4j.Logger appPackageLogger = org.apache.log4j.Logger.getLogger(APP_PACKAGE);
-            appPackageLogger.setAdditivity(false);  // Don't propagate to root logger
-            if (!appPackageLogger.isAttached(appAppender)) {
-                appPackageLogger.addAppender(appAppender);
-            }
-
-            // Configure timeline logger
-            timelineAppender = configureAppender(timelineAppender, TIMELINE_APPENDER_NAME, TIMELINE_PATTERN, actionLogFile, false);
-            if (timelineAppender == null) return false;
-            if (!LOG4J_TIMELINE.isAttached(timelineAppender)) {
-                LOG4J_TIMELINE.addAppender(timelineAppender);
-            }
-
-            return true;
-        } catch (Exception e) {
-            System.err.println("[TimelineLogger] Error configuring: " + e.getMessage());
-            return false;
         }
     }
 
@@ -296,19 +305,21 @@ public class TimelineLogger {
      * Closes all loggers and releases file handles.
      */
     public static void close() {
-        // Close timeline appender
-        if (timelineAppender != null) {
-            timelineAppender.close();
-            LOG4J_TIMELINE.removeAppender(timelineAppender);
-            timelineAppender = null;
+        synchronized (APPENDER_LOCK) {
+            // Close timeline appender
+            if (timelineAppender != null) {
+                timelineAppender.close();
+                LOG4J_TIMELINE.removeAppender(timelineAppender);
+                timelineAppender = null;
+            }
+            // Close app appender
+            if (appAppender != null) {
+                appAppender.close();
+                org.apache.log4j.Logger.getLogger(APP_PACKAGE).removeAppender(appAppender);
+                appAppender = null;
+            }
+            activeActions.clear();
         }
-        // Close app appender
-        if (appAppender != null) {
-            appAppender.close();
-            org.apache.log4j.Logger.getLogger(APP_PACKAGE).removeAppender(appAppender);
-            appAppender = null;
-        }
-        activeActions.clear();
     }
 
     // ==========================================================================
