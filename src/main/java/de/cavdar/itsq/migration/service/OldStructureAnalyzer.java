@@ -266,8 +266,21 @@ public class OldStructureAnalyzer {
         return Collections.unmodifiableList(customerKeys);
     }
 
+    /**
+     * Liefert eine unveränderbare View. Auch die innere Map und ihre Listen
+     * werden gewrappt — sonst könnte ein Aufrufer die nested Datenstruktur
+     * unbemerkt korrumpieren. Modifikationen müssen über analyze() neu erfolgen.
+     */
     public Map<String, Map<String, List<TestCasePhaseAssignment>>> getCustomerScenarioAssignments() {
-        return customerScenarioAssignments;
+        Map<String, Map<String, List<TestCasePhaseAssignment>>> outer = new TreeMap<>();
+        for (Map.Entry<String, Map<String, List<TestCasePhaseAssignment>>> e : customerScenarioAssignments.entrySet()) {
+            Map<String, List<TestCasePhaseAssignment>> innerWrapped = new TreeMap<>();
+            for (Map.Entry<String, List<TestCasePhaseAssignment>> inner : e.getValue().entrySet()) {
+                innerWrapped.put(inner.getKey(), Collections.unmodifiableList(inner.getValue()));
+            }
+            outer.put(e.getKey(), Collections.unmodifiableMap(innerWrapped));
+        }
+        return Collections.unmodifiableMap(outer);
     }
 
     public List<TestCasePhaseAssignment> getAssignmentsForCustomer(String customerKey) {

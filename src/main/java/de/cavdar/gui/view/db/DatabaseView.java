@@ -265,7 +265,10 @@ public class DatabaseView extends BaseView implements ConnectionManager.Connecti
 
         executeTask(() -> {
             try {
-                TimelineLogger.info(DatabaseView.class, "Connecting to database: {}", url);
+                // URL maskieren — eine vom User getippte/gepastete URL kann
+                // user:password Inline-Credentials enthalten (jdbc:.../db?user=x&password=y
+                // oder jdbc://user:pwd@host/db). Vor dem Logging entfernen.
+                TimelineLogger.info(DatabaseView.class, "Connecting to database: {}", maskCredentialsInUrl(url));
                 Class.forName(driver);
                 connection = DriverManager.getConnection(url, username, password);
 
@@ -537,6 +540,24 @@ public class DatabaseView extends BaseView implements ConnectionManager.Connecti
             dbPanel.getQueryArea().setText("SELECT * FROM " + quoteIdentifier(tableName));
             TimelineLogger.debug(DatabaseView.class, "Selected table/view: {}", tableName);
         }
+    }
+
+    /**
+     * Maskiert Credentials in einer JDBC-URL für sicheres Logging.
+     * Behandelt zwei verbreitete Formate:
+     *   - jdbc:dbtype://user:password@host:port/db   (URL-Style)
+     *   - jdbc:dbtype://host/db?user=x&password=y    (Query-Style)
+     */
+    static String maskCredentialsInUrl(String url) {
+        if (url == null || url.isEmpty()) {
+            return url;
+        }
+        // user:password@host → ***:***@host
+        String masked = url.replaceAll("://[^/@\\s]+:[^/@\\s]+@", "://***:***@");
+        // password=...&  oder  password=...$
+        masked = masked.replaceAll("(?i)([?&])password=[^&\\s]*", "$1password=***");
+        masked = masked.replaceAll("(?i)([?&])user=[^&\\s]*", "$1user=***");
+        return masked;
     }
 
     /**

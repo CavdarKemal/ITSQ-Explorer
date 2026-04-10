@@ -221,7 +221,11 @@ public class TimelineLogger {
 
                 return true;
             } catch (Exception e) {
-                System.err.println("[TimelineLogger] Error configuring: " + e.getMessage());
+                // Hier ist der Logger gerade in der Initialisierung — wir können
+                // ihn nicht selbst zum Loggen nutzen. Mindestens Stack-Trace
+                // sichtbar machen, damit der Bootstrap-Fehler diagnostizierbar ist.
+                System.err.println("[TimelineLogger] Error configuring: " + e);
+                e.printStackTrace(System.err);
                 return false;
             }
         }
@@ -280,7 +284,8 @@ public class TimelineLogger {
             System.out.println("[TimelineLogger] " + appenderName + " initialized: " + logFile.getAbsolutePath());
             return appender;
         } catch (Exception e) {
-            System.err.println("[TimelineLogger] Error configuring " + appenderName + ": " + e.getMessage());
+            System.err.println("[TimelineLogger] Error configuring " + appenderName + ": " + e);
+            e.printStackTrace(System.err);
             return null;
         }
     }

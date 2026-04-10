@@ -1,5 +1,6 @@
 package de.cavdar.itsq.migration.service;
 
+import de.cavdar.gui.util.TimelineLogger;
 import de.cavdar.itsq.TestSupportClientKonstanten.TEST_PHASE;
 import de.cavdar.itsq.migration.model.MigrationConfig;
 import de.cavdar.itsq.migration.model.MigrationProblem;
@@ -210,7 +211,12 @@ public class MigrationService {
             reportProgress("Migration abgeschlossen: " + result.getStatus());
 
         } catch (Exception e) {
-            result.fail(e.getMessage());
+            // getMessage() würde Stack-Trace und ggf. Cause-Chain wegwerfen.
+            // Stattdessen vollen Klassennamen + Message in result einbetten
+            // und das Original mit Stack-Trace loggen, bevor wir es weiterwerfen.
+            TimelineLogger.error(MigrationService.class,
+                    "Migration fehlgeschlagen", e);
+            result.fail(e.getClass().getSimpleName() + ": " + e.getMessage());
             throw e;
         }
 
