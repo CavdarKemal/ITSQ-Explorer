@@ -2,6 +2,7 @@ package de.cavdar.itsq;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,8 +66,12 @@ public class TestCustomer {
         testScenariosMap.put(testScenario.getScenarioName(), testScenario);
     }
 
+    /**
+     * Liefert eine unveränderbare View der Test-Szenarien.
+     * Modifikationen müssen über addTestScenario()/setTestScenariosMap() erfolgen.
+     */
     public Map<String, TestScenario> getTestScenariosMap() {
-        return testScenariosMap;
+        return Collections.unmodifiableMap(testScenariosMap);
     }
 
     public void setTestScenariosMap(Map<String, TestScenario> testScenariosMap) {

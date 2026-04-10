@@ -103,10 +103,19 @@ public class TestScenario {
     }
 
     public List<TestCrefo> getTestCrefosAsList() {
-        return new ArrayList(getTestFallNameToTestCrefoMap().values());
+        return new ArrayList<>(testFallNameToTestCrefoMap.values());
     }
 
+    /**
+     * Liefert eine unveränderbare View. Modifikationen müssen über
+     * addTestCrefo() oder ähnliche Methoden erfolgen.
+     */
     public Map<String, TestCrefo> getTestFallNameToTestCrefoMap() {
+        return Collections.unmodifiableMap(testFallNameToTestCrefoMap);
+    }
+
+    /** Interner Zugriff für Cloning und Klassen-interne Operationen. */
+    Map<String, TestCrefo> getTestFallNameToTestCrefoMapMutable() {
         return testFallNameToTestCrefoMap;
     }
 
