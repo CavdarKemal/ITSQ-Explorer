@@ -48,7 +48,7 @@ public class AppConfig {
     /**
      * The currently active config file path (changes when loadFrom is called)
      */
-    private String currentFilePath = INITIAL_FILE_PATH;
+    private volatile String currentFilePath = INITIAL_FILE_PATH;
 
     /**
      * Property groups for organized config file output.
