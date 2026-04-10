@@ -132,22 +132,22 @@ public class TestScenario {
                         long crefoNr = Long.parseLong(splitHash[0].trim());
                         TestCrefo testCrefo = testFallNameToTestCrefoMap.get(testFallName);
                         if (testCrefo == null) {
-                            String errorStr = "TestCrefo mit dem Namen: " + testFallName + " konnte nicht in der Map gefunden werden!\n\t" + line;
-                            TimelineLogger.info(this.getClass(), errorStr);
-                        }
-                        if (testCrefo != null) {
+                            TimelineLogger.warn(this.getClass(),
+                                    "TestCrefo mit dem Namen '{}' konnte nicht in der Map gefunden werden! Zeile: {}",
+                                    testFallName, line);
+                        } else {
                             File xmlFile = findXmlFileForTestfallAndCrefo(allXmlFiles, testFallName, crefoNr);
                             testCrefoExtender.fillExtraData(testCrefo, crefoNr, xmlFile);
                         }
                     } catch (Exception ex) {
-                        String errorStr = "Exception in der Zeile '" + line + "' der Datei '" + thePropsFile.getName() + "':\n" + ex.getMessage();
-                        TimelineLogger.info(this.getClass(), errorStr, ex);
+                        TimelineLogger.error(this.getClass(),
+                                "Exception in der Zeile '" + line + "' der Datei '" + thePropsFile.getName() + "'", ex);
                     }
                 }
             });
         } catch (IOException ex) {
-            String errorStr = "Exception beim Lesen der Properties-Datei '" + thePropsFile.getAbsolutePath() + "'!\n" + ex.getMessage();
-            TimelineLogger.info(this.getClass(), errorStr, ex);
+            TimelineLogger.error(this.getClass(),
+                    "Exception beim Lesen der Properties-Datei '" + thePropsFile.getAbsolutePath() + "'", ex);
         }
     }
 
@@ -165,11 +165,13 @@ public class TestScenario {
                         String testFallInfo = (splitHash.length > 1) ? splitHash[1] : "Norbert's faulheit!";
                         File refExportFile = findXmlFileForCrefo(archivBestandXmlFilesList, crefoNr);
                         if (!shouldBeExported && (refExportFile != null && refExportFile.exists())) {
-                            String errorStr = "Für die Test-Crefo '" + testFallName + "':" + crefoNr + " dürfte es KEINE RefExport-XML existieren!";
-                            TimelineLogger.info(this.getClass(), errorStr);
+                            TimelineLogger.warn(this.getClass(),
+                                    "Für die Test-Crefo '{}':{} dürfte es KEINE RefExport-XML existieren!",
+                                    testFallName, crefoNr);
                         } else if (shouldBeExported && (refExportFile == null || !refExportFile.exists())) {
-                            String errorStr = "Für die Test-Crefo '" + testFallName + "':" + crefoNr + " müsste es EINE RefExport-XML existieren!";
-                            TimelineLogger.info(this.getClass(), errorStr);
+                            TimelineLogger.warn(this.getClass(),
+                                    "Für die Test-Crefo '{}':{} müsste es EINE RefExport-XML existieren!",
+                                    testFallName, crefoNr);
                         }
                         TestCrefo testCrefo = testFallNameToTestCrefoMap.get(testFallName);
                         if (testCrefo == null) {
@@ -177,14 +179,14 @@ public class TestScenario {
                             testFallNameToTestCrefoMap.put(testFallName, testCrefo);
                         }
                     } catch (Exception ex) {
-                        String errorStr = "\n!!! Exception in der Zeile '" + line + "' der Datei '" + itsqRefExportsPropsFile.getName() + "':\n" + ex.getMessage();
-                        TimelineLogger.info(this.getClass(), errorStr);
+                        TimelineLogger.error(this.getClass(),
+                                "Exception in der Zeile '" + line + "' der Datei '" + itsqRefExportsPropsFile.getName() + "'", ex);
                     }
                 }
             });
         } catch (IOException ex) {
-            String errorStr = "\n!!! Exception beim Lesen der Properties-Datei '" + itsqRefExportsPropsFile.getAbsolutePath() + "'!\n" + ex.getMessage();
-            TimelineLogger.error(this.getClass(), errorStr);
+            TimelineLogger.error(this.getClass(),
+                    "Exception beim Lesen der Properties-Datei '" + itsqRefExportsPropsFile.getAbsolutePath() + "'", ex);
         }
     }
 
