@@ -33,7 +33,12 @@ public abstract class BaseView extends JInternalFrame implements ViewInfo {
     protected final AppConfig config = AppConfig.getInstance();
 
     protected BaseViewPanel panel;
-    protected SwingWorker<Void, Void> currentWorker;
+    /**
+     * volatile, weil currentWorker vom EDT (executeTask, Cancel-Action) gesetzt
+     * und vom Background-Thread (SwingWorker.done() ruft Cleanup) gelesen wird.
+     * Ohne volatile fehlt die happens-before-Garantie zwischen den Threads.
+     */
+    protected volatile SwingWorker<Void, Void> currentWorker;
 
     /**
      * Constructs a new BaseView with the specified title.

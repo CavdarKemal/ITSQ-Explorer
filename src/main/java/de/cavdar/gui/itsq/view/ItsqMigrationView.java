@@ -29,9 +29,11 @@ public class ItsqMigrationView extends ItsqMigrationPanel {
     private static final String TARGET_PATH_KEY = "migration.target.path";
 
     private final AppConfig cfg;
-    private MigrationService migrationService;
-    private MigrationConfig migrationConfig;
-    private SwingWorker<MigrationResult, String> currentWorker;
+    // volatile: vom EDT (runPreview/runMigration) gesetzt, vom SwingWorker
+    // doInBackground gelesen — ohne volatile fehlt die happens-before Garantie
+    private volatile MigrationService migrationService;
+    private volatile MigrationConfig migrationConfig;
+    private volatile SwingWorker<MigrationResult, String> currentWorker;
 
     public ItsqMigrationView(AppConfig config) {
         super();

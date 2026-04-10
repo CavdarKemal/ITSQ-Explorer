@@ -29,8 +29,13 @@ public class EnvironmentLockManager {
 
     private static ServerSocket lockSocket;
     private static File currentLockFile;
-    private static String currentLockedEnv;
-    private static boolean shutdownHookRegistered = false;
+    // volatile: wird von synchronisierten Settern (acquireLock/releaseLock)
+    // geschrieben aber von nicht-synchronisiertem getCurrentLockedEnvironment()
+    // gelesen — ohne volatile kann der Reader stale Werte sehen.
+    private static volatile String currentLockedEnv;
+    // volatile: gleiche Begründung — Marker steht zwar in synchronized
+    // registerShutdownHook(), wird aber nirgends sonst gelesen, also defensiv.
+    private static volatile boolean shutdownHookRegistered = false;
 
     /**
      * Ermittelt den Port fuer eine Umgebung.
@@ -140,9 +145,19 @@ public class EnvironmentLockManager {
      * @param envDir Das Umgebungsverzeichnis (wird fuer Umgebungsnamen-Extraktion verwendet)
      * @return true wenn gesperrt, false wenn frei
      */
-    public static boolean isLocked(File envDir) {
+    public static synchronized boolean isLocked(File envDir) {
+        // synchronized: gleicher Monitor wie acquireLock/releaseLock — sonst
+        // kann zwischen isLocked()==false und einem nachfolgenden acquireLock()
+        // ein anderer Thread den Port belegen (TOCTOU). Innerhalb desselben
+        // Monitors bekommt der Caller eine konsistente Sicht.
         String envName = envDir.getName().toUpperCase();
         int port = getPortForEnvironment(envName);
+
+        // Wir halten den Lock selbst auf dieser Umgebung — gilt als "uns gehörig",
+        // nicht als "von jemand anderem gesperrt"
+        if (lockSocket != null && envName.equals(currentLockedEnv)) {
+            return false;
+        }
 
         try (ServerSocket testSocket = new ServerSocket(port, 1, InetAddress.getLoopbackAddress())) {
             // Port ist frei - Umgebung ist nicht gesperrt
