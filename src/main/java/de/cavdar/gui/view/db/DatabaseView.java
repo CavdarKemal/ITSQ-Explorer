@@ -44,6 +44,11 @@ import java.util.Vector;
 public class DatabaseView extends BaseView implements ConnectionManager.ConnectionListener {
 
     private static final int MAX_HISTORY_SIZE = 20;
+    /** Default-Timeout für SQL-Statements in Sekunden — schützt vor runaway queries. */
+    private static final int QUERY_TIMEOUT_SECONDS = 60;
+    /** SQL-Statement-Präfixe, die ohne Bestätigung ausgeführt werden dürfen (lesend). */
+    private static final java.util.Set<String> READ_ONLY_PREFIXES =
+            java.util.Set.of("SELECT", "WITH", "EXPLAIN", "SHOW", "DESCRIBE", "DESC");
 
     private DatabaseViewPanel dbPanel;
     /**
@@ -529,9 +534,57 @@ public class DatabaseView extends BaseView implements ConnectionManager.Connecti
 
         if ("Tabellen".equals(parentName) || "Views".equals(parentName)) {
             String tableName = node.toString();
-            dbPanel.getQueryArea().setText("SELECT * FROM " + tableName);
+            dbPanel.getQueryArea().setText("SELECT * FROM " + quoteIdentifier(tableName));
             TimelineLogger.debug(DatabaseView.class, "Selected table/view: {}", tableName);
         }
+    }
+
+    /**
+     * Heuristik: Beginnt das Statement mit einem bekannten Read-Keyword?
+     * Nicht 100% wasserdicht (z.B. funktionsaufruf der schreibt), aber als
+     * "fragt nach bei alles was nicht offensichtlich SELECT ist" reicht es.
+     */
+    private boolean isReadOnlyStatement(String sql) {
+        String trimmed = sql.trim();
+        // Block-Kommentare am Anfang überspringen
+        while (trimmed.startsWith("/*")) {
+            int end = trimmed.indexOf("*/");
+            if (end < 0) break;
+            trimmed = trimmed.substring(end + 2).trim();
+        }
+        // Zeilen-Kommentare am Anfang überspringen
+        while (trimmed.startsWith("--")) {
+            int eol = trimmed.indexOf('\n');
+            if (eol < 0) return false;
+            trimmed = trimmed.substring(eol + 1).trim();
+        }
+        if (trimmed.isEmpty()) return false;
+        int spaceIdx = trimmed.indexOf(' ');
+        String firstToken = (spaceIdx < 0 ? trimmed : trimmed.substring(0, spaceIdx)).toUpperCase();
+        return READ_ONLY_PREFIXES.contains(firstToken);
+    }
+
+    /**
+     * Quotet einen SQL-Identifier (Tabellenname, Spaltenname) korrekt für die
+     * jeweilige DB. Verwendet das vom Driver gemeldete identifier-quote-string
+     * und escaped enthaltene Quote-Zeichen via Verdoppelung. Schützt davor,
+     * dass Tabellennamen mit Sonderzeichen oder reservierten Wörtern den
+     * SELECT-Builder zerschießen.
+     */
+    private String quoteIdentifier(String identifier) {
+        Connection conn = this.connection;
+        String quote = "\"";
+        if (conn != null) {
+            try {
+                String fromMeta = conn.getMetaData().getIdentifierQuoteString();
+                if (fromMeta != null && !fromMeta.trim().isEmpty()) {
+                    quote = fromMeta;
+                }
+            } catch (SQLException ignored) {
+                // fallback bleibt "
+            }
+        }
+        return quote + identifier.replace(quote, quote + quote) + quote;
     }
 
     // ===== Query Logic =====
@@ -543,11 +596,34 @@ public class DatabaseView extends BaseView implements ConnectionManager.Connecti
             return;
         }
 
+        // D1: Write-Statements müssen explizit bestätigt werden — schützt vor
+        // versehentlichem UPDATE/DELETE/DROP. Lese-Queries laufen sofort durch.
+        if (!isReadOnlyStatement(sql)) {
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Diese Abfrage scheint Daten zu verändern (UPDATE/DELETE/INSERT/DDL).\n\n" +
+                            sql.substring(0, Math.min(200, sql.length())) +
+                            (sql.length() > 200 ? "..." : "") +
+                            "\n\nWirklich ausführen?",
+                    "Schreibende Abfrage bestätigen", JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+            if (confirm != JOptionPane.YES_OPTION) {
+                TimelineLogger.info(DatabaseView.class, "User cancelled write statement");
+                return;
+            }
+        }
+
         executeTask(() -> {
             long startTime = System.currentTimeMillis();
             TimelineLogger.info(DatabaseView.class, "Executing SQL: {}", sql);
 
             try (Statement stmt = connection.createStatement()) {
+                // D2: Query-Timeout setzen — sonst kann eine Runaway-Query
+                // den Background-Worker beliebig lange blockieren
+                try {
+                    stmt.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
+                } catch (SQLException ignored) {
+                    // Manche Driver unterstützen das nicht — dann fallback auf default
+                }
                 boolean isResultSet = stmt.execute(sql);
 
                 if (isResultSet) {
