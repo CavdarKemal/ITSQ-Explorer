@@ -56,6 +56,20 @@ public class EnvironmentLockManager {
 
         int port = getPortForEnvironment(envName);
 
+        // Bestehenden Lock prüfen — verhindert Socket-Leak bei doppeltem acquireLock()
+        if (lockSocket != null) {
+            if (envName.equals(currentLockedEnv)) {
+                // Gleiche Umgebung wird erneut gelockt — bereits gehalten
+                TimelineLogger.debug(EnvironmentLockManager.class,
+                        "Lock für {} bereits aktiv (Port {})", envName, port);
+                return true;
+            }
+            // Wechsel zu anderer Umgebung — alten Lock sauber freigeben
+            TimelineLogger.info(EnvironmentLockManager.class,
+                    "Wechsel von {} zu {} — gebe alten Lock frei", currentLockedEnv, envName);
+            releaseLock();
+        }
+
         try {
             // Versuche ServerSocket auf dem Port zu oeffnen
             // Wenn der Port bereits belegt ist, wirft dies eine Exception
