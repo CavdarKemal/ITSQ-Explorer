@@ -31,8 +31,10 @@ public class AB30XMLProperties {
         auftragClz = clone.getAuftragClz();
         btlgCrefosList.addAll(clone.getBtlgCrefosList());
         bilanzType = clone.getBilanzType();
+        ehProdAuftrType = clone.getEhProduktAuftragType();
         mitCtaStatistik = clone.isMitCtaStatistik();
         dsgVoSperre = clone.isMitDsgVoSperre();
+        usedByCustomersList.addAll(clone.getUsedByCustomersList());
     }
 
     public AB30XMLProperties(String strLine, int version) {
