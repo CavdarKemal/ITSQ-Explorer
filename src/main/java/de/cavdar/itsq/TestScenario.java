@@ -144,6 +144,8 @@ public class TestScenario {
         }
         try {
             final Collection<File> allXmlFiles = FileUtils.listFiles(theFile, new String[]{"xml"}, true);
+            // Performance: Vorab-Index nach crefoNr aufbauen — O(N+M) statt O(N·M)
+            final Map<Long, List<File>> crefoToXmlFilesIndex = buildCrefoIndexMulti(allXmlFiles);
             final List<String> propsFileContent = FileUtils.readLines(thePropsFile);
             propsFileContent.forEach(line -> {
                 if (!line.isBlank() && !line.startsWith("#")) {
@@ -158,7 +160,7 @@ public class TestScenario {
                                     "TestCrefo mit dem Namen '{}' konnte nicht in der Map gefunden werden! Zeile: {}",
                                     testFallName, line);
                         } else {
-                            File xmlFile = findXmlFileForTestfallAndCrefo(allXmlFiles, testFallName, crefoNr);
+                            File xmlFile = findInIndex(crefoToXmlFilesIndex, testFallName, crefoNr);
                             testCrefoExtender.fillExtraData(testCrefo, crefoNr, xmlFile);
                         }
                     } catch (Exception ex) {
@@ -175,6 +177,8 @@ public class TestScenario {
 
     protected void initItsqRefExportsData(Collection<File> archivBestandXmlFilesList) {
         try {
+            // Performance: Vorab-Index aufbauen — O(N+M) statt O(N·M)
+            final Map<Long, File> crefoToXmlIndex = buildCrefoIndex(archivBestandXmlFilesList);
             List<String> propsFileContent = FileUtils.readLines(itsqRefExportsPropsFile);
             propsFileContent.forEach(line -> {
                 if (!line.isBlank() && !line.startsWith("#")) {
@@ -185,7 +189,7 @@ public class TestScenario {
                         final String[] splitHash = splitEqual[1].trim().split("#");
                         long crefoNr = Long.parseLong(splitHash[0].trim());
                         String testFallInfo = (splitHash.length > 1) ? splitHash[1] : "Norbert's faulheit!";
-                        File refExportFile = findXmlFileForCrefo(archivBestandXmlFilesList, crefoNr);
+                        File refExportFile = crefoToXmlIndex.get(crefoNr);
                         if (!shouldBeExported && (refExportFile != null && refExportFile.exists())) {
                             TimelineLogger.warn(this.getClass(),
                                     "Für die Test-Crefo '{}':{} dürfte es KEINE RefExport-XML existieren!",
@@ -212,14 +216,73 @@ public class TestScenario {
         }
     }
 
-    private File findXmlFileForCrefo(Collection<File> allXmlFiles, long crefoNr) {
-        List<File> collect = allXmlFiles.stream().filter(theFile -> theFile.getName().contains(crefoNr + "")).collect(Collectors.toList());
-        return collect.isEmpty() ? null : collect.get(0);
+    /**
+     * Baut einen Index aller XML-Dateien nach crefoNr.
+     * Filename muss die crefoNr als Substring enthalten.
+     * O(M) — einmaliger Durchlauf statt O(N·M) bei wiederholtem Linear-Scan.
+     */
+    private Map<Long, File> buildCrefoIndex(Collection<File> allXmlFiles) {
+        Map<Long, File> index = new HashMap<>();
+        for (File f : allXmlFiles) {
+            String name = f.getName();
+            // Crefo-Nummer aus Filename extrahieren — wir nehmen den ersten gefundenen passenden Eintrag
+            // (entspricht dem alten Verhalten: nur ein File pro crefoNr)
+            for (Long crefo : extractCrefoNumbers(name)) {
+                index.putIfAbsent(crefo, f);
+            }
+        }
+        return index;
     }
 
-    private File findXmlFileForTestfallAndCrefo(Collection<File> allXmlFiles, String testFallName, long crefoNr) {
-        List<File> collect = allXmlFiles.stream().filter(theFile -> theFile.getName().contains(testFallName) && theFile.getName().contains(crefoNr + "")).collect(Collectors.toList());
-        return collect.isEmpty() ? null : collect.get(0);
+    /**
+     * Wie buildCrefoIndex, aber sammelt alle Files pro crefoNr (nicht nur den ersten).
+     * Wird gebraucht wenn zusätzlich nach testFallName-Substring gefiltert wird.
+     */
+    private Map<Long, List<File>> buildCrefoIndexMulti(Collection<File> allXmlFiles) {
+        Map<Long, List<File>> index = new HashMap<>();
+        for (File f : allXmlFiles) {
+            String name = f.getName();
+            for (Long crefo : extractCrefoNumbers(name)) {
+                index.computeIfAbsent(crefo, k -> new ArrayList<>()).add(f);
+            }
+        }
+        return index;
+    }
+
+    /**
+     * Extrahiert alle Long-Zahlen aus dem Filename. Wird benötigt weil
+     * die alte Implementation .contains(crefoNr+"") nutzte — d.h. die Nummer
+     * konnte irgendwo im Namen vorkommen.
+     */
+    private List<Long> extractCrefoNumbers(String name) {
+        List<Long> numbers = new ArrayList<>();
+        int i = 0;
+        while (i < name.length()) {
+            if (Character.isDigit(name.charAt(i))) {
+                int start = i;
+                while (i < name.length() && Character.isDigit(name.charAt(i))) i++;
+                try {
+                    numbers.add(Long.parseLong(name.substring(start, i)));
+                } catch (NumberFormatException ignored) { }
+            } else {
+                i++;
+            }
+        }
+        return numbers;
+    }
+
+    /**
+     * Sucht im Multi-Index nach einem File das BEIDE Substrings (testFallName + crefoNr) enthält.
+     */
+    private File findInIndex(Map<Long, List<File>> index, String testFallName, long crefoNr) {
+        List<File> candidates = index.get(crefoNr);
+        if (candidates == null) return null;
+        for (File f : candidates) {
+            if (f.getName().contains(testFallName)) {
+                return f;
+            }
+        }
+        return null;
     }
 
     public StringBuilder dump(String prefix) {
