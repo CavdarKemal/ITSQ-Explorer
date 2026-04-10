@@ -17,6 +17,13 @@ public class TestEnvironmentManager {
     private static final String LOGS_DIR = "logs";
     private static final String TEST_OUTPUTS_DIR = "TEST-OUTPUTS";
 
+    /**
+     * Lock-Objekt zur Synchronisation aller Mutationen und Reads des
+     * statischen State. Vorher konnten zwei Threads parallel
+     * switchEnvironment() aufrufen und die Felder inkonsistent setzen.
+     */
+    private static final Object STATE_LOCK = new Object();
+
     private static String currentEnvironment = null;
     private static File currentEnvDir = null;
     private static File currentLogsDir = null;
@@ -34,7 +41,9 @@ public class TestEnvironmentManager {
      * @param baseDir the base directory
      */
     public static void setBaseDirectory(File baseDir) {
-        baseDirectory = baseDir;
+        synchronized (STATE_LOCK) {
+            baseDirectory = baseDir;
+        }
         TimelineLogger.debug(TestEnvironmentManager.class, "Base directory set to: {}", baseDir);
     }
 
@@ -44,8 +53,10 @@ public class TestEnvironmentManager {
      * @return the base directory (user.dir if not explicitly set)
      */
     public static File getBaseDirectory() {
-        if (baseDirectory != null) {
-            return baseDirectory;
+        synchronized (STATE_LOCK) {
+            if (baseDirectory != null) {
+                return baseDirectory;
+            }
         }
         return new File(System.getProperty("user.dir"));
     }
@@ -57,11 +68,13 @@ public class TestEnvironmentManager {
     public static void reset() {
         closeLogging();
         EnvironmentLockManager.releaseLock();
-        currentEnvironment = null;
-        currentEnvDir = null;
-        currentLogsDir = null;
-        currentTestOutputsDir = null;
-        baseDirectory = null;
+        synchronized (STATE_LOCK) {
+            currentEnvironment = null;
+            currentEnvDir = null;
+            currentLogsDir = null;
+            currentTestOutputsDir = null;
+            baseDirectory = null;
+        }
     }
 
     /**
@@ -96,57 +109,59 @@ public class TestEnvironmentManager {
     public static boolean switchEnvironment(String configFileName) {
         String envName = extractEnvironmentName(configFileName);
 
-        if (envName.equals(currentEnvironment)) {
-            TimelineLogger.debug(TestEnvironmentManager.class, "Already in environment: {}", envName);
+        synchronized (STATE_LOCK) {
+            if (envName.equals(currentEnvironment)) {
+                TimelineLogger.debug(TestEnvironmentManager.class, "Already in environment: {}", envName);
+                return true;
+            }
+
+            TimelineLogger.info(TestEnvironmentManager.class, "Switching to environment: {}", envName);
+
+            // Create directory structure
+            File baseDir = getBaseDirectory();
+            File testEnvsDir = new File(baseDir, TEST_ENVS_DIR);
+            File envDir = new File(testEnvsDir, envName);
+            File logsDir = new File(envDir, LOGS_DIR);
+            File testOutputsDir = new File(envDir, TEST_OUTPUTS_DIR);
+
+            // Create directories first (needed for lock file)
+            if (!createDirectories(logsDir, testOutputsDir)) {
+                return false;
+            }
+
+            // Check if new environment is locked by another instance
+            if (EnvironmentLockManager.isLocked(envDir)) {
+                TimelineLogger.warn(TestEnvironmentManager.class,
+                        "Environment {} is locked by another instance", envName);
+                return false;
+            }
+
+            // Release old lock (if any)
+            EnvironmentLockManager.releaseLock();
+
+            // Acquire lock for new environment
+            if (!EnvironmentLockManager.acquireLock(envDir, envName)) {
+                TimelineLogger.error(TestEnvironmentManager.class,
+                        "Could not acquire lock for environment: {}", envName);
+                return false;
+            }
+
+            // Configure logging (both app and timeline logs)
+            String appLogFileName = envName + ".log";
+            String actionLogFileName = envName + "-actions.log";
+            if (!TimelineLogger.configure(logsDir, appLogFileName, actionLogFileName)) {
+                TimelineLogger.warn(TestEnvironmentManager.class, "Could not configure logging for environment: {}", envName);
+            }
+
+            // Update state
+            currentEnvironment = envName;
+            currentEnvDir = envDir;
+            currentLogsDir = logsDir;
+            currentTestOutputsDir = testOutputsDir;
+
+            TimelineLogger.info(TestEnvironmentManager.class, "Environment switched to: {} ({})", envName, envDir.getAbsolutePath());
             return true;
         }
-
-        TimelineLogger.info(TestEnvironmentManager.class, "Switching to environment: {}", envName);
-
-        // Create directory structure
-        File baseDir = getBaseDirectory();
-        File testEnvsDir = new File(baseDir, TEST_ENVS_DIR);
-        File envDir = new File(testEnvsDir, envName);
-        File logsDir = new File(envDir, LOGS_DIR);
-        File testOutputsDir = new File(envDir, TEST_OUTPUTS_DIR);
-
-        // Create directories first (needed for lock file)
-        if (!createDirectories(logsDir, testOutputsDir)) {
-            return false;
-        }
-
-        // Check if new environment is locked by another instance
-        if (EnvironmentLockManager.isLocked(envDir)) {
-            TimelineLogger.warn(TestEnvironmentManager.class,
-                    "Environment {} is locked by another instance", envName);
-            return false;
-        }
-
-        // Release old lock (if any)
-        EnvironmentLockManager.releaseLock();
-
-        // Acquire lock for new environment
-        if (!EnvironmentLockManager.acquireLock(envDir, envName)) {
-            TimelineLogger.error(TestEnvironmentManager.class,
-                    "Could not acquire lock for environment: {}", envName);
-            return false;
-        }
-
-        // Configure logging (both app and timeline logs)
-        String appLogFileName = envName + ".log";
-        String actionLogFileName = envName + "-actions.log";
-        if (!TimelineLogger.configure(logsDir, appLogFileName, actionLogFileName)) {
-            TimelineLogger.warn(TestEnvironmentManager.class, "Could not configure logging for environment: {}", envName);
-        }
-
-        // Update state
-        currentEnvironment = envName;
-        currentEnvDir = envDir;
-        currentLogsDir = logsDir;
-        currentTestOutputsDir = testOutputsDir;
-
-        TimelineLogger.info(TestEnvironmentManager.class, "Environment switched to: {} ({})", envName, envDir.getAbsolutePath());
-        return true;
     }
 
     /**
@@ -176,37 +191,47 @@ public class TestEnvironmentManager {
      * Returns the current environment name.
      */
     public static String getCurrentEnvironment() {
-        return currentEnvironment;
+        synchronized (STATE_LOCK) {
+            return currentEnvironment;
+        }
     }
 
     /**
      * Returns the current environment directory.
      */
     public static File getCurrentEnvDir() {
-        return currentEnvDir;
+        synchronized (STATE_LOCK) {
+            return currentEnvDir;
+        }
     }
 
     /**
      * Returns the current logs directory.
      */
     public static File getCurrentLogsDir() {
-        return currentLogsDir;
+        synchronized (STATE_LOCK) {
+            return currentLogsDir;
+        }
     }
 
     /**
      * Returns the current test outputs directory.
      */
     public static File getCurrentTestOutputsDir() {
-        return currentTestOutputsDir;
+        synchronized (STATE_LOCK) {
+            return currentTestOutputsDir;
+        }
     }
 
     /**
      * Returns the current log file path.
      */
     public static String getCurrentLogFilePath() {
-        if (currentLogsDir == null || currentEnvironment == null) {
-            return null;
+        synchronized (STATE_LOCK) {
+            if (currentLogsDir == null || currentEnvironment == null) {
+                return null;
+            }
+            return new File(currentLogsDir, currentEnvironment + ".log").getAbsolutePath();
         }
-        return new File(currentLogsDir, currentEnvironment + ".log").getAbsolutePath();
     }
 }
