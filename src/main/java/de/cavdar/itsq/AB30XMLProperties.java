@@ -205,12 +205,7 @@ public class AB30XMLProperties {
     }
 
     private String getStrUsedByCustomers() {
-        String strUsedByCustomers = "";
-        for (String testCustomerKey : getUsedByCustomersList()) {
-            strUsedByCustomers += testCustomerKey;
-            strUsedByCustomers += ";";
-        }
-        return strUsedByCustomers.length() > 0 ? (strUsedByCustomers.substring(0, strUsedByCustomers.length() - 1)) : "";
+        return String.join(";", getUsedByCustomersList());
     }
 
     @Override
@@ -218,7 +213,7 @@ public class AB30XMLProperties {
         // "# CREFO::[{Used-By-Customer;...}],[IKA-AUFTR-CLZ],[{BTLG-CREFO;...}],[BEFR|BILANZ|BEIDES],[ABLEHNUNG_FIRMA_FIRMA|ABLEHNUNG_FIRMA_PRIVPERSON|...],[CTA_STATISTIK],[DSGVO_SPERRE]"
         String strBtlgList = "";
         if (!btlgCrefosList.isEmpty()) {
-            strBtlgList = btlgCrefosList.toString().replaceAll(",", ";");
+            strBtlgList = btlgCrefosList.toString().replace(",", ";");
             strBtlgList = strBtlgList.replace("[", "").replace("]", "").replace(" ", "");
         }
         String strAuftrClz = auftragClz != null ? auftragClz.toString() : "";

@@ -44,6 +44,28 @@ class AB30XMLPropertiesTest {
     }
 
     @Test
+    @DisplayName("toString – usedByCustomers werden mit Semikolon getrennt (kein Trailing-Separator)")
+    void toString_usedByCustomersJoinedCorrectly() {
+        AB30XMLProperties props = new AB30XMLProperties(123L);
+        props.usedByCustomersList.add("C1");
+        props.usedByCustomersList.add("C2");
+        props.usedByCustomersList.add("C3");
+
+        String s = props.toString();
+        assertThat(s).contains("[C1;C2;C3]");
+        // Kein Trailing-Separator
+        assertThat(s).doesNotContain("C3;]");
+    }
+
+    @Test
+    @DisplayName("toString – leere Customer-Liste crasht nicht")
+    void toString_emptyCustomerList() {
+        AB30XMLProperties props = new AB30XMLProperties(123L);
+        String s = props.toString();
+        assertThat(s).isNotNull();
+    }
+
+    @Test
     @DisplayName("Copy-Constructor – Defensive Copy: Änderungen an der Kopie beeinflussen Original nicht")
     void copyConstructor_defensiveCopy() {
         AB30XMLProperties original = new AB30XMLProperties(
